@@ -1,0 +1,6 @@
+geneticalgorithm2
+numpy
+pandas
+matplotlib
+scipy
+tqdm
