@@ -7,13 +7,13 @@ class Interaction:
         self.Km = dissociation
         self.n = hill_coefficient
         self.rate = rate
-        if self.effect in [1, -1, 0]:
+        if self.effect in [1, -1]:
             self.effect = effect
         else:
             raise ValueError("Effect defines whether the interaction up or downregulates so can only be 1 or -1")
 
     def update_rate(self, new_rate):
-        self.rate.__setattr__("value", new_rate)
+        self.rate.update_rate("value", new_rate)
 
     def get_interaction_parameters(self):
         parameters = {}
@@ -23,3 +23,4 @@ class Interaction:
             parameters[self.Km.__getattribute__("identifier")] = self.Km.__getattribute__("value")
         parameters[self.rate.__getattribute__("identifier")] = self.effect * self.rate.__getattribute__("value")
         return parameters
+        
