@@ -1,4 +1,6 @@
-import pandas as pd
+from scipy.integrate import odeint
+import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 
 class Network:
     def __init__(self, identifier: str, rates: list, interactions: list, substrates: list):
@@ -101,5 +103,14 @@ class Network:
 
         return list(dydt.values())
     
-    def graph(self, time):
-        pass
+    def graph(self, time, path="./figure.png"):
+        colors = mcolors.CSS4_COLORS
+        y = odeint(self.get_dydt, self.get_initials(), time)
+        fig = plt.figure()
+        for i, substrate in list(self.substrates.values()):
+            plt.plot(time, y[:,i], colors[i], label=substrate.__getattribute__("identifier"))
+        plt.xlabel("Time (mins)",fontsize=12)
+        plt.ylabel("Concentration (AU)",fontsize=12)
+        plt.legend(loc="upper right", fontsize=5)
+        fig.savefig(path)
+        plt.close(fig)
