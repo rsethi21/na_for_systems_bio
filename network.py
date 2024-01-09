@@ -1,6 +1,7 @@
 from scipy.integrate import odeint
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
+import geneticalgorithm2 as ga
 
 class Network:
     def __init__(self, identifier: str, rates: list, interactions: list, substrates: list):
@@ -8,6 +9,7 @@ class Network:
         self.interactions = {interaction.identifier: interaction for interaction in interactions}
         self.substrates = {substrate.identifier: substrate for substrate in substrates}
         self.parameters = self.get_all_parameters()
+        self.initial_parameter_values = {parameter_id: parameter.__getattribute__("value") for parameter_id, parameter in self.parameters.items()}
         self.parsed_interactions = self.parse_interactions()
     
     def get_all_parameters(self):
@@ -16,6 +18,11 @@ class Network:
             parameters.update(interaction.get_interaction_parameters())
         return parameters
     
+    def set_parameters(self, X):
+        for i, parameter in enumerate(list(self.parameters.values())):
+            if not parameter.fixed:
+                parameter.update_rate(X[i])
+
     def set_currents(self, new_currents):
         for substrate, new_current in zip(list(self.substrates.values()), new_currents):
             substrate.__setattr__("current_value", new_current)
@@ -25,9 +32,16 @@ class Network:
         for substrate in list(self.substrates.values()):
             y0.append(substrate.__getattribute__())
         return y0
-
-    def freeze_parameters(self, parameter_id_tuple):
-        pass
+    
+    def reset(self):
+        for sub_id, substrate in self.substrates.items():
+            substrate.__setattr__("current_value", substrate.initial_value)
+        for rate_id, rate in self.parameters.items():
+            rate.update_rate(self.initial_parameter_values[rate_id])
+    
+    def freeze_parameters(self, parameter_ids):
+        for parameter_id in parameter_ids:
+            self.parameters[parameter_id].__setattr__("fixed", True)
 
     def parse_interactions(self):
         parsed_interactions = {substrate.identifier: {} for substrate in self.substrates}
@@ -62,7 +76,7 @@ class Network:
                 terms = {k.__getattribute__("identifier"): upreg_term, r.__getattribute__("identifier"): downreg_term}
                 for parameter_id, associated_interactions in self.parsed_interactions[substrate_id].items():
                     if parameter_id not in list(terms.keys()):
-                        temporary_term = self.parameters[parameter_id]*associated_interactions[0][1]
+                        temporary_term = self.parameters[parameter_id].__getattribute__("value")*associated_interactions[0][1]
                     else:
                         temporary_term = terms[parameter_id]
                     for interaction in associated_interactions:
@@ -70,8 +84,8 @@ class Network:
                             temporary_term *= self.substrates[interaction[0]].__getattribute__("current_value")
                         else:
                             substrate = self.substrates[interaction[0]].__getattribute__("current_value")
-                            Km = self.parameters[interaction[2]]
-                            n = self.parameters[interaction[3]]
+                            Km = self.parameters[interaction[2]].__getattribute__("value")
+                            n = self.parameters[interaction[3]].__getattribute__("value")
                             temporary_term = temporary_term * (Km**n/(substrate**n + Km**n))
                     terms[parameter_id] = temporary_term
                 dydt[substrate_id] = sum(list(terms.values()))
@@ -114,3 +128,28 @@ class Network:
         plt.legend(loc="upper right", fontsize=5)
         fig.savefig(path)
         plt.close(fig)
+        return y
+
+    def fit(self, data, time, arguments, bounds, bound_types, obj_calc=None, mlp=1):
+        def objective(X):
+            self.set_parameters(X)
+            cost = 0
+            predictions = odeint(self.get_dydt, self.get_initials(), time)
+            for substrate_id, substrate_data in data:
+                for time_point, truth in substrate_data:
+                    prediction = predictions[int(time_point), substrate_id]
+                    if obj_calc == None:
+                        cost += (prediction - float(truth))**2
+                    else:
+                        cost += obj_calc(prediction, truth)
+            return cost
+
+        fitting_model = ga(function = objective,
+                           dimension = len(bounds),
+                           variable_type = bound_types,
+                           variable_boundries = bounds,
+                           algorithm_parameters = arguments
+                           )
+        
+        fitting_model.run(set_function=ga.set_function_multiprocess(objective, n_jobs=mlp))
+        return fitting_model.result.variable

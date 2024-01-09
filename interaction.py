@@ -18,9 +18,9 @@ class Interaction:
     def get_interaction_parameters(self):
         parameters = {}
         if self.Km != None:
-            parameters[self.n.__getattribute__("identifier")] = self.n.__getattribute__("value")
+            parameters[self.n.__getattribute__("identifier")] = self.n
         if self.n != None:
-            parameters[self.Km.__getattribute__("identifier")] = self.Km.__getattribute__("value")
-        parameters[self.rate.__getattribute__("identifier")] = self.effect * self.rate.__getattribute__("value")
+            parameters[self.Km.__getattribute__("identifier")] = self.Km
+        parameters[self.rate.__getattribute__("identifier")] = self.rate
         return parameters
         
