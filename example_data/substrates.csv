@@ -1,6 +1,6 @@
 identifier,iv,type,k,r,mv,trs
-"a",1.0,"non-stimulus","r1","k1",None
-"b",0.0,"non-stimulus","k1","r1",None
+"a",1.0,"non-stimulus","r1","k1",None,None
+"b",0.0,"non-stimulus","k1","r1",None,None
 "c",0.0,"stimulus",None,None,1.0,"20, 40; 60, 80"
-"d",0.2,"non-stimulus","k2","r2",None
-"e",0.0,"non-stimulus","r2","k2",None
+"d",0.2,"non-stimulus","k2","r2",None,None
+"e",0.0,"non-stimulus","r2","k2",None,None

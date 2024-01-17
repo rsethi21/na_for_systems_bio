@@ -1,5 +1,7 @@
 import pandas as pd
+import numpy as np
 import argparse
+import pdb
 
 from substrate import Substrate
 from interaction import Interaction
@@ -26,30 +28,40 @@ if __name__ == "__main__":
     
     for rate_index, rate in rates_df.iterrows():
         parameters = rate.to_dict()
-        if parameters["bounds"] == None:
+        if pd.isna(parameters["bounds"]):
             del parameters["bounds"]
             del parameters["bounds_type"]
         else:
-            if parameters["bounds_type"] != None:
+            if not pd.isna(parameters["bounds_type"]):
                 convert_type = parameters["bounds_type"]
+                if convert_type == "int":
+                    convert_type = int
+                elif convert_type == "float":
+                    convert_type = float
             else:
                 convert_type = int
             parameters["bounds"] = [convert_type(b) for b in parameters["bounds"].split(",")]
         rate_obj = Rate(**parameters)
         rates.append(rate_obj)
-    
+
     for substrate_index, substrate in substrates_df.iterrows():
         parameters = substrate.to_dict()
-        if parameters["k"] != None:
+        if not pd.isna(parameters["k"]):
             parameters["k"] = [r for r in rates if r.identifier == parameters["k"]][0]
-        if parameters["r"] != None:
+        else:
+            del parameters["k"]
+        if not pd.isna(parameters["r"]):
             parameters["r"] = [r for r in rates if r.identifier == parameters["r"]][0]
-        if parameters["trs"] != None:
+        else:
+            del parameters["r"]
+        if not pd.isna(parameters["trs"]):
             range_strings = parameters["trs"].split(";")
             time_ranges = []
             for range_string in range_strings:
                 time_ranges.append([int(t) for t in range_string.split(",")])
             parameters["trs"] = time_ranges
+        else:
+            del parameters["trs"]
         substrate_obj = Substrate(**parameters)
         substrates.append(substrate_obj)
 
@@ -58,12 +70,19 @@ if __name__ == "__main__":
         parameters["affected"] = [s for s in substrates if s.identifier == parameters["affected"]][0]
         parameters["effector"] = [s for s in substrates if s.identifier == parameters["effector"]][0]
         parameters["rate"] = [r for r in rates if r.identifier == parameters["rate"]][0]
-        if parameters["dissociation"] != None:
+        if not pd.isna(parameters["dissociation"]):
             parameters["dissociation"] = [r for r in rates if r.identifier == parameters["dissociation"]][0]
-        if parameters["hill_coefficient"] != None:
+        else:
+            del parameters["dissociation"]
+        if not pd.isna(parameters["hill_coefficient"]):
             parameters["hill_coefficient"] = [r for r in rates if r.identifier == parameters["hill_coefficient"]][0]
+        else:
+            del parameters["hill_coefficient"]
         interaction_obj = Interaction(**parameters)
         interactions.append(interaction_obj)
     
+    # pdb.set_trace()
     network = Network("example", rates, interactions, substrates)
+    time = np.linspace(0, 100, 101)
     print(network.identifier)
+    print(network.graph(time))

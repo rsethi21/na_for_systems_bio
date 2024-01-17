@@ -40,7 +40,7 @@ class Network:
     def get_initials(self):
         y0 = []
         for substrate in list(self.substrates.values()):
-            y0.append(substrate.__getattribute__())
+            y0.append(substrate.__getattribute__("initial_value"))
         return y0
     
     def reset(self):
@@ -54,7 +54,7 @@ class Network:
             self.parameters[parameter_id].__setattr__("fixed", True)
 
     def parse_interactions(self):
-        parsed_interactions = {substrate.identifier: {} for substrate in self.substrates}
+        parsed_interactions = {name: {} for name in self.substrates.keys()}
         for id, interaction in self.interactions.items():
             substrate_id = interaction.__getattribute__("s1").__getattribute__("identifier")
             rate_id = interaction.__getattribute__("rate").__getattribute__("identifier")
@@ -81,8 +81,8 @@ class Network:
             if substrate_of_interest.__getattribute__("type") == "non-stimulus":
                 k = substrate_of_interest.__getattribute__("k")
                 r = substrate_of_interest.__getattribute__("r")
-                upreg_term = 1*k
-                downreg_term = -1*r*substrate_of_interest.__getattribute__("current_value")
+                upreg_term = 1*k.__getattribute__("value")
+                downreg_term = -1*r.__getattribute__("value")*substrate_of_interest.__getattribute__("current_value")
                 terms = {k.__getattribute__("identifier"): upreg_term, r.__getattribute__("identifier"): downreg_term}
                 for parameter_id, associated_interactions in self.parsed_interactions[substrate_id].items():
                     if parameter_id not in list(terms.keys()):
@@ -128,10 +128,10 @@ class Network:
         return list(dydt.values())
     
     def graph(self, time, path="./figure.png"):
-        colors = mcolors.CSS4_COLORS
+        colors = list(mcolors.CSS4_COLORS.keys())
         y = odeint(self.get_dydt, self.get_initials(), time)
         fig = plt.figure()
-        for i, substrate in list(self.substrates.values()):
+        for i, substrate in enumerate(list(self.substrates.values())):
             plt.plot(time, y[:,i], colors[i], label=substrate.__getattribute__("identifier"))
         plt.xlabel("Time (mins)",fontsize=12)
         plt.ylabel("Concentration (AU)",fontsize=12)

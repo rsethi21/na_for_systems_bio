@@ -4,17 +4,14 @@ class Substrate:
         self.identifier = identifier
         self.initial_value = iv
         self.current_value = iv
-        if type.lower() in ["stimulus", "non-stimulus"]:
-            self.type = type
-        else:
-            raise ValueError("Type can only be one of the following: 'stimulus' or 'non-stimulus'")
+        self.type = type
+        # if type.lower() in ["stimulus", "non-stimulus"]:
+        #     self.type = type
+        # else:
+        #     raise ValueError("Type can only be one of the following: 'stimulus' or 'non-stimulus'")
         if self.type == "stimulus":
             self.max_value = mv
-        else:
-            raise ValueError("Need a maximum value assigned for a stimulus")
         self.time_ranges = trs
         if self.type == "non-stimulus":
             self.k = k
             self.r = r
-        else:
-            raise ValueError("Need a k (upreg) and r (downreg) rate for a non-stimulus substrate")
