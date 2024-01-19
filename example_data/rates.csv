@@ -1,6 +1,6 @@
 identifier,value,fixed,bounds,bounds_type
-"k1",1.0,True,"0.1,1",float
-"k2",1.0,True,"0.1,1",float
+"k1",1.2,True,"0.1,1",float
+"k2",3.0,True,"0.1,1",float
 "r1",0.1,True,"0.1,1",float
 "r2",0.1,True,"0.1,1",float
 "s1",0.01,True,"0.1,10",float
