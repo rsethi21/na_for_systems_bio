@@ -2,6 +2,7 @@ from scipy.integrate import odeint
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import geneticalgorithm2 as ga
+import numpy as np
 
 class Network:
     def __init__(self, identifier: str, rates: list, interactions: list, substrates: list):
@@ -74,14 +75,22 @@ class Network:
         return parsed_interactions
 
     def get_dydt(self, y, time):
+        print(time)
         self.set_currents(y)
         dydt = {substrate_id: 0 for substrate_id in list(self.substrates.keys())}
         for substrate_id in list(dydt.keys()):
             substrate_of_interest = self.substrates[substrate_id]
+            if substrate_of_interest.other != None:
+                other = self.substrates[substrate_of_interest.other]
+            else:
+                other = None
             if substrate_of_interest.__getattribute__("type") == "non-stimulus":
                 k = substrate_of_interest.__getattribute__("k")
                 r = substrate_of_interest.__getattribute__("r")
-                upreg_term = 1*k.__getattribute__("value")
+                if substrate_of_interest.other != None:
+                    upreg_term = 1*k.__getattribute__("value")*other.__getattribute__("current_value")
+                else:
+                    upreg_term = 1*k.__getattribute__("value")
                 downreg_term = -1*r.__getattribute__("value")*substrate_of_interest.__getattribute__("current_value")
                 terms = {k.__getattribute__("identifier"): upreg_term, r.__getattribute__("identifier"): downreg_term}
                 for parameter_id, associated_interactions in self.parsed_interactions[substrate_id].items():
@@ -103,32 +112,80 @@ class Network:
                 max_val = substrate_of_interest.__getattribute__("max_value")
                 current_val = substrate_of_interest.__getattribute__("current_value")
                 time_ranges = substrate_of_interest.__getattribute__("time_ranges")
-                between = False
-                after = False
-                if len(time_ranges) == 0:
+                if time_ranges == None:
                     between = True
                     after = False
                 else:
-                    for time_range in time_ranges:
+                    for time_range in reversed(time_ranges):
                         if time >= time_range[0] and time <= time_range[1]:
                             between = True
                             after = False
                             break
-                        elif time > time_range[1]:
+                        elif time > time_range[1] and time > time_range[0]:
                             after = True
                             between = False
+                            break
                         else:
-                            after = False
                             between = False
+                            after = False
                 if between:
                     dydt[substrate_id] = max_val - current_val
                 elif after:
                     dydt[substrate_id] = -current_val
+                else:
+                    dydt[substrate_id] = 0
 
         return list(dydt.values())
+
+    def get_representation_dydt(self):
+        dydt = {substrate_id: 0 for substrate_id in list(self.substrates.keys())}
+        for substrate_id in list(dydt.keys()):
+            substrate_of_interest = self.substrates[substrate_id]
+            if substrate_of_interest.other != None:
+                other = self.substrates[substrate_of_interest.other]
+            else:
+                other = None
+            if substrate_of_interest.__getattribute__("type") == "non-stimulus":
+                k = substrate_of_interest.__getattribute__("k")
+                r = substrate_of_interest.__getattribute__("r")
+                if substrate_of_interest.other != None:
+                    upreg_term = f"{k.__getattribute__('identifier')}[{other.__getattribute__('identifier')}]"
+                else:
+                    upreg_term = f"{k.__getattribute__('identifier')}"
+                downreg_term = f" - {r.__getattribute__('identifier')}[{substrate_of_interest.__getattribute__('identifier')}]"
+                terms = {k.__getattribute__("identifier"): upreg_term, r.__getattribute__("identifier"): downreg_term}
+                for parameter_id, associated_interactions in self.parsed_interactions[substrate_id].items():
+                    if parameter_id not in list(terms.keys()):
+                        if associated_interactions[0][1] == -1:
+                            temporary_term = f" - {parameter_id}"
+                        else:
+                            temporary_term = f" + {parameter_id}"
+                    else:
+                        temporary_term = terms[parameter_id]
+                    for interaction in associated_interactions:
+                        if len(interaction) == 2:
+                            temporary_term += f"[{self.substrates[interaction[0]].__getattribute__('identifier')}]"
+                        else:
+                            substrate = self.substrates[interaction[0]].__getattribute__("identifier")
+                            Km = self.parameters[interaction[2]].__getattribute__("identifier")
+                            n = self.parameters[interaction[3]].__getattribute__("identifier")
+                            temporary_term = temporary_term + f"[{Km}^{n}/({substrate}^{n} + {Km}^{n})]"
+                    terms[parameter_id] = temporary_term
+                overall = ""
+                key = f"d[{substrate_id}]/dt"
+                for term in list(terms.values()):
+                    overall += term
+                dydt[key] = overall
+                del dydt[substrate_id]
+            else:
+                pass
+
+        return dydt
     
     def graph(self, time, path="./figure.png"):
         colors = list(mcolors.CSS4_COLORS.keys())
+        np.random.seed(2024)
+        np.random.shuffle(colors)
         y = odeint(self.get_dydt, self.get_initials(), time)
         fig = plt.figure()
         for i, substrate in enumerate(list(self.substrates.values())):

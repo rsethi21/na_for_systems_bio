@@ -18,6 +18,8 @@ parser.add_argument("-f", "--fitting", help="fitting parameters json file", requ
 if __name__ == "__main__":
     args = parser.parse_args()
     
+    # maybe add other attribute to the substrate object in order to get a dydt without explit marking on the input data
+
     rates_df = pd.read_csv(args.rates)
     substrates_df = pd.read_csv(args.substrates)
     interactions_df = pd.read_csv(args.interactions)
@@ -62,6 +64,10 @@ if __name__ == "__main__":
             parameters["trs"] = time_ranges
         else:
             del parameters["trs"]
+        if not pd.isna(parameters["other"]):
+            pass
+        else:
+            del parameters["other"]
         substrate_obj = Substrate(**parameters)
         substrates.append(substrate_obj)
 
@@ -83,6 +89,7 @@ if __name__ == "__main__":
     
     # pdb.set_trace()
     network = Network("example", rates, interactions, substrates)
-    time = np.linspace(0, 100, 101)
+    time = np.array([i/10 for i in range(1000)])
     print(network.identifier)
-    print(network.graph(time))
+    print(network.get_representation_dydt())
+    network.graph(time)

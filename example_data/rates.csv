@@ -3,6 +3,6 @@ identifier,value,fixed,bounds,bounds_type
 "k2",1.0,True,"0.1,1",float
 "r1",0.1,True,"0.1,1",float
 "r2",0.1,True,"0.1,1",float
-"s1",2.0,True,"0.1,10",float
+"s1",0.01,True,"0.1,10",float
 "K1",0.5,True,"0.1,1",float
 "n1",2,True,"1,10",int
