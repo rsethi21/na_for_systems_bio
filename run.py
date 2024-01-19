@@ -92,4 +92,4 @@ if __name__ == "__main__":
     time = np.array([i/10 for i in range(1000)])
     print(network.identifier)
     print(network.get_representation_dydt())
-    network.graph(time)
+    network.graph_distributions(time, 200)

@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import geneticalgorithm2 as ga
 import numpy as np
+from tqdm import tqdm
+import pdb
 
 class Network:
     def __init__(self, identifier: str, rates: list, interactions: list, substrates: list):
@@ -44,6 +46,10 @@ class Network:
             y0.append(substrate.__getattribute__("initial_value"))
         return y0
     
+    def set_currents(self, new_initials):
+        for substrate, new_initial in zip(list(self.substrates.values()), new_initials):
+            substrate.__setattr__("current_value", new_initial)
+
     def reset(self):
         for sub_id, substrate in self.substrates.items():
             substrate.__setattr__("current_value", substrate.initial_value)
@@ -75,7 +81,6 @@ class Network:
         return parsed_interactions
 
     def get_dydt(self, y, time):
-        print(time)
         self.set_currents(y)
         dydt = {substrate_id: 0 for substrate_id in list(self.substrates.keys())}
         for substrate_id in list(dydt.keys()):
@@ -187,15 +192,45 @@ class Network:
         np.random.seed(2024)
         np.random.shuffle(colors)
         y = odeint(self.get_dydt, self.get_initials(), time)
-        fig = plt.figure()
-        for i, substrate in enumerate(list(self.substrates.values())):
-            plt.plot(time, y[:,i], colors[i], label=substrate.__getattribute__("identifier"))
-        plt.xlabel("Time (mins)",fontsize=12)
-        plt.ylabel("Concentration (AU)",fontsize=12)
-        plt.legend(loc="upper right", fontsize=5)
-        fig.savefig(path)
-        plt.close(fig)
+        if path != None:
+            fig = plt.figure()
+            for i, substrate in enumerate(list(self.substrates.values())):
+                plt.plot(time, y[:,i], colors[i], label=substrate.__getattribute__("identifier"))
+            plt.xlabel("Time (mins)",fontsize=12)
+            plt.ylabel("Concentration (AU)",fontsize=12)
+            plt.legend(loc="upper right", fontsize=5)
+            fig.savefig(path)
+            plt.close(fig)
         return y
+
+    def graph_distributions(self, time, samples, path="./figure_with_area.png"):
+        colors = list(mcolors.CSS4_COLORS.keys())
+        np.random.shuffle(colors)
+        y0s = []
+        for _ in tqdm(range(samples),desc="Generating Random Initial",total=samples):
+            y0 = []
+            for i, s in enumerate(self.substrates.values()):
+                if s.type == "stimulus":
+                    y0.append(0.0)
+                else:
+                    y0.append(np.random.rand()*10)
+            y0s.append(y0)
+        ys = []
+        for y0 in y0s:
+            ys.append(self.graph(time, path=None))
+        
+        pdb.set_trace()
+        temp_fig = plt.figure()
+        min_y = np.mean(ys, axis=0) - np.std(ys, axis=0)*2
+        max_y = np.mean(ys, axis=0) + np.std(ys, axis=0)*2
+        mean_y = np.mean(ys, axis=0)
+        for i, s in enumerate(self.substrates.values()):
+            plt.fill_between(time, min_y[:,i], max_y[:,i], color=colors[i], alpha=0.2)
+            plt.plot(time, mean_y[:,i], label=s.__getattribute__("identifier"),linewidth=2.0)
+        plt.xlabel("Time (mins)")
+        plt.ylabel("Concentration (AU)")
+        plt.legend(loc="upper right", fontsize=5)
+        temp_fig.savefig(path)
 
     def fit(self, data, time, arguments, obj_calc=None, mlp=1):
         bounds, bound_types = self.get_bounds_information()
