@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import argparse
 import pdb
+import json
 
 from substrate import Substrate
 from interaction import Interaction
@@ -14,7 +15,6 @@ parser.add_argument("-r", "--rates", help="rates csv", required=True)
 parser.add_argument("-i", "--interactions", help="interactions csv", required=True)
 parser.add_argument("-f", "--fitting", help="fitting parameters json file", required=False,default=None)
 
-
 if __name__ == "__main__":
     args = parser.parse_args()
     
@@ -23,7 +23,9 @@ if __name__ == "__main__":
     rates_df = pd.read_csv(args.rates)
     substrates_df = pd.read_csv(args.substrates)
     interactions_df = pd.read_csv(args.interactions)
-    
+    with open(args.fitting, "r") as file:
+        fit_dictionary = json.load(file)
+
     rates = []
     substrates = []
     interactions = []
@@ -38,10 +40,10 @@ if __name__ == "__main__":
                 convert_type = parameters["bounds_type"]
                 if convert_type == "int":
                     convert_type = int
-                elif convert_type == "float":
+                elif convert_type == "real":
                     convert_type = float
             else:
-                convert_type = int
+                convert_type = float
             parameters["bounds"] = [convert_type(b) for b in parameters["bounds"].split(",")]
         rate_obj = Rate(**parameters)
         rates.append(rate_obj)
@@ -84,12 +86,29 @@ if __name__ == "__main__":
             parameters["hill_coefficient"] = [r for r in rates if r.identifier == parameters["hill_coefficient"]][0]
         else:
             del parameters["hill_coefficient"]
+        if not pd.isna(parameters["effect"]):
+            pass
+        else:
+            del parameters["effect"]
         interaction_obj = Interaction(**parameters)
         interactions.append(interaction_obj)
     
     # pdb.set_trace()
+    argues = {'max_num_iteration': 10,\
+                    'population_size':100,\
+                    'mutation_probability':0.30,\
+                    'elit_ratio': 0.01,\
+                    'parents_portion': 0.3,\
+                    'crossover_type':'uniform',\
+                    'max_iteration_without_improv': 5}
     network = Network("example", rates, interactions, substrates)
-    time = np.array([i/10 for i in range(1000)])
+    time = np.array([i for i in range(500)])
     print(network.identifier)
-    print(network.get_representation_dydt())
-    network.graph_distributions(time, 200)
+    derivatives = network.get_representation_dydt()
+    for key, value in derivatives.items():
+        print(key)
+        print(value)
+        print()
+    # pdb.set_trace()
+    network.fit(fit_dictionary, time, argues, normalize=True, mlp=6)
+    network.graph_distributions(time, 1000, substrates_to_plot=["PI3K", "pAKT", "pPTEN", "Phagocytosis", "LPS", "HDACi"], normalize=True)

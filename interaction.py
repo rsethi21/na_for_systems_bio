@@ -1,13 +1,13 @@
 class Interaction:
 
-    def __init__(self, identifier: str, affected: object, effector: object, rate: object, effect: int, dissociation: object = None, hill_coefficient: object = None):
+    def __init__(self, identifier: str, affected: object, effector: object, rate: object, effect: int = None, dissociation: object = None, hill_coefficient: object = None):
         self.identifier = identifier
         self.s1 = affected
         self.s2 = effector
         self.Km = dissociation
         self.n = hill_coefficient
         self.rate = rate
-        if effect in [1, -1]:
+        if effect in [1, -1, None]:
             self.effect = effect
         else:
             raise ValueError("Effect defines whether the interaction up or downregulates so can only be 1 or -1")

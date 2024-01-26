@@ -1,17 +1,18 @@
 from scipy.integrate import odeint
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
-import geneticalgorithm2 as ga
+from geneticalgorithm2 import geneticalgorithm2 as ga
 import numpy as np
 from tqdm import tqdm
 import pdb
+import joblib
 
 class Network:
     def __init__(self, identifier: str, rates: list, interactions: list, substrates: list):
         self.identifier = identifier
         self.interactions = {interaction.identifier: interaction for interaction in interactions}
         self.substrates = {substrate.identifier: substrate for substrate in substrates}
-        self.parameters = self.get_all_parameters()
+        self.parameters = {rate.identifier: rate for rate in rates}
         self.initial_parameter_values = {parameter_id: parameter.__getattribute__("value") for parameter_id, parameter in self.parameters.items()}
         self.parsed_interactions = self.parse_interactions()
         self.rates = rates
@@ -25,16 +26,18 @@ class Network:
     def get_bounds_information(self):
         bounds = []
         bounds_types = []
+        rate_names = []
         for parameter in list(self.parameters.values()):
             if not parameter.fixed:
                 bounds.append(parameter.__getattribute__("bounds"))
                 bounds_types.append(parameter.__getattribute__("bounds_type"))
-        return bounds, bounds_types
+                rate_names.append(parameter.__getattribute__("identifier"))
+        return bounds, bounds_types, rate_names
 
-    def set_parameters(self, X):
-        for i, parameter in enumerate(list(self.parameters.values())):
-            if not parameter.fixed:
-                parameter.update_rate(X[i])
+    def set_parameters(self, X, rate_names):
+        for i, parameter in self.parameters.items():
+            if i in rate_names:
+                parameter.update_rate(X[rate_names.index(i)])
 
     def set_currents(self, new_currents):
         for substrate, new_current in zip(list(self.substrates.values()), new_currents):
@@ -107,10 +110,16 @@ class Network:
                         if len(interaction) == 2:
                             temporary_term *= self.substrates[interaction[0]].__getattribute__("current_value")
                         else:
-                            substrate = self.substrates[interaction[0]].__getattribute__("current_value")
-                            Km = self.parameters[interaction[2]].__getattribute__("value")
-                            n = self.parameters[interaction[3]].__getattribute__("value")
-                            temporary_term = temporary_term * (Km**n/(substrate**n + Km**n))
+                            if interaction[1] == -1:
+                                substrate = self.substrates[interaction[0]].__getattribute__("current_value")
+                                Km = self.parameters[interaction[2]].__getattribute__("value")
+                                n = self.parameters[interaction[3]].__getattribute__("value")
+                                temporary_term = temporary_term * (Km**n/(substrate**n + Km**n))
+                            else:
+                                substrate = self.substrates[interaction[0]].__getattribute__("current_value")
+                                Km = self.parameters[interaction[2]].__getattribute__("value")
+                                n = self.parameters[interaction[3]].__getattribute__("value")
+                                temporary_term = temporary_term * ((substrate**n + Km**n)/Km**n)
                     terms[parameter_id] = temporary_term
                 dydt[substrate_id] = sum(list(terms.values()))
             else:
@@ -118,7 +127,7 @@ class Network:
                 current_val = substrate_of_interest.__getattribute__("current_value")
                 time_ranges = substrate_of_interest.__getattribute__("time_ranges")
                 if time_ranges == None:
-                    between = True
+                    between = False
                     after = False
                 else:
                     for time_range in reversed(time_ranges):
@@ -171,10 +180,16 @@ class Network:
                         if len(interaction) == 2:
                             temporary_term += f"[{self.substrates[interaction[0]].__getattribute__('identifier')}]"
                         else:
-                            substrate = self.substrates[interaction[0]].__getattribute__("identifier")
-                            Km = self.parameters[interaction[2]].__getattribute__("identifier")
-                            n = self.parameters[interaction[3]].__getattribute__("identifier")
-                            temporary_term = temporary_term + f"[{Km}^{n}/({substrate}^{n} + {Km}^{n})]"
+                            if interaction[1] == -1:
+                                substrate = self.substrates[interaction[0]].__getattribute__("identifier")
+                                Km = self.parameters[interaction[2]].__getattribute__("identifier")
+                                n = self.parameters[interaction[3]].__getattribute__("identifier")
+                                temporary_term = temporary_term + f"[{Km}^{n}/({substrate}^{n} + {Km}^{n})]"
+                            else:
+                                substrate = self.substrates[interaction[0]].__getattribute__("identifier")
+                                Km = self.parameters[interaction[2]].__getattribute__("identifier")
+                                n = self.parameters[interaction[3]].__getattribute__("identifier")
+                                temporary_term = temporary_term + f"[({substrate}^{n} + {Km}^{n})/{Km}^{n}]"
                     terms[parameter_id] = temporary_term
                 overall = ""
                 key = f"d[{substrate_id}]/dt"
@@ -187,15 +202,33 @@ class Network:
 
         return dydt
     
-    def graph(self, time, path="./figure.png"):
+    def graph(self, time, normalize=False, substrates_to_plot=None, path="./figure.png"):
         colors = list(mcolors.CSS4_COLORS.keys())
-        np.random.seed(2024)
         np.random.shuffle(colors)
-        y = odeint(self.get_dydt, self.get_initials(), time)
+        if normalize:
+            stimuli_ranges = []
+            for s in self.substrates.values():
+                stimuli_ranges.append(s.time_ranges)
+                s.__setattr__("time_ranges", None)
+            probe = odeint(self.get_dydt, self.get_initials(), time)[-1]
+            for index, s in enumerate(self.substrates.values()):
+                s.__setattr__("time_ranges", stimuli_ranges[index])
+
+            folds_y = odeint(self.get_dydt, probe, time)
+            y = folds_y.copy()
+            for t in range(y.shape[0]):
+                for index, s in enumerate(self.substrates.values()):
+                    if s.type == "non-stimulus":
+                        y[t,index] = folds_y[t,index]/probe[index]
+                    else:
+                        y[t, index] = folds_y[t,index]
+        else:
+            y = odeint(self.get_dydt, self.get_initials(), time)
         if path != None:
             fig = plt.figure()
-            for i, substrate in enumerate(list(self.substrates.values())):
-                plt.plot(time, y[:,i], colors[i], label=substrate.__getattribute__("identifier"))
+            for i, substrate in tqdm(enumerate(list(self.substrates.values())), desc="Plotting Each Substrate", total=len(self.substrates)):
+                if substrate.identifier in substrates_to_plot:
+                    plt.plot(time, y[:,i], colors[i], label=substrate.__getattribute__("identifier"))
             plt.xlabel("Time (mins)",fontsize=12)
             plt.ylabel("Concentration (AU)",fontsize=12)
             plt.legend(loc="upper right", fontsize=5)
@@ -203,7 +236,7 @@ class Network:
             plt.close(fig)
         return y
 
-    def graph_distributions(self, time, samples, path="./figure_with_area.png"):
+    def graph_distributions(self, time, samples, normalize=False, substrates_to_plot=[], path="./figure_with_area.png"):
         colors = list(mcolors.CSS4_COLORS.keys())
         np.random.shuffle(colors)
         y0s = []
@@ -213,46 +246,49 @@ class Network:
                 if s.type == "stimulus":
                     y0.append(0.0)
                 else:
-                    y0.append(np.random.rand()*10)
+                    y0.append(2**np.random.randn())
             y0s.append(y0)
         ys = []
-        for y0 in y0s:
-            ys.append(self.graph(time, path=None))
-        
-        pdb.set_trace()
-        temp_fig = plt.figure()
+        for y0 in tqdm(y0s, desc="Generating Simulations"):
+            ys.append(self.graph(time, normalize=normalize, path=None))
         min_y = np.mean(ys, axis=0) - np.std(ys, axis=0)*2
         max_y = np.mean(ys, axis=0) + np.std(ys, axis=0)*2
         mean_y = np.mean(ys, axis=0)
-        for i, s in enumerate(self.substrates.values()):
-            plt.fill_between(time, min_y[:,i], max_y[:,i], color=colors[i], alpha=0.2)
-            plt.plot(time, mean_y[:,i], label=s.__getattribute__("identifier"),linewidth=2.0)
-        plt.xlabel("Time (mins)")
-        plt.ylabel("Concentration (AU)")
-        plt.legend(loc="upper right", fontsize=5)
-        temp_fig.savefig(path)
+        if path != None:
+            temp_fig = plt.figure()
+            for i, s in tqdm(enumerate(self.substrates.values()), desc="Plotting Each Substrates", total=len(self.substrates)):
+                if s.identifier in substrates_to_plot:
+                    plt.fill_between(time, min_y[:,i], max_y[:,i], color=colors[i])
+                    plt.plot(time, mean_y[:,i], color=colors[i],label=s.__getattribute__("identifier"),linewidth=1.0)
+            plt.xlabel("Time (mins)")
+            plt.ylabel("Concentration (AU)")
+            plt.legend(loc="upper right", fontsize=5)
+            temp_fig.savefig(path)
+            print(f"Figure saved: {path}")
+        return mean_y
 
-    def fit(self, data, time, arguments, obj_calc=None, mlp=1):
-        bounds, bound_types = self.get_bounds_information()
-        def objective(X):
-            self.set_parameters(X)
+    def fit(self, data, time, arguments, normalize=False, obj_calc=None, mlp=1):
+        bounds, bound_types, names = self.get_bounds_information()
+        substrate_names = list(self.substrates.keys())
+        def loss(X):
+            self.set_parameters(X, names)
             cost = 0
-            predictions = odeint(self.get_dydt, self.get_initials(), time)
-            for substrate_id, substrate_data in data:
-                for time_point, truth in substrate_data:
-                    prediction = predictions[int(time_point), substrate_id]
+            predictions = self.graph(time, normalize=normalize, path=None)
+            for substrate_id, substrate_data in data.items():
+                for time_point, truth in substrate_data.items():
+                    prediction = predictions[int(time_point), substrate_names.index(substrate_id)]
                     if obj_calc == None:
                         cost += (prediction - float(truth))**2
                     else:
                         cost += obj_calc(prediction, truth)
             return cost
 
-        fitting_model = ga(function = objective,
+        fitting_model = ga(function = loss,
                            dimension = len(bounds),
                            variable_type = bound_types,
-                           variable_boundries = bounds,
+                           variable_boundaries = bounds,
                            algorithm_parameters = arguments
                            )
         
-        fitting_model.run(set_function=ga.set_function_multiprocess(objective, n_jobs=mlp))
-        return fitting_model.result.variable
+        fitting_model.run(set_function=ga.set_function_multiprocess(loss, n_jobs=mlp))
+        return names, fitting_model.result.variable
