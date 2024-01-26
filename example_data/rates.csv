@@ -13,11 +13,11 @@ identifier,value,fixed,bounds,bounds_type
 "r5",1,False,"0.01,1",real
 "r6",1,True,"0.01,1",real
 "r7",1,False,"0.01,1",real
-"s1",1,False,"0.01,10",real
-"s2",1,False,"0.01,10",real
-"s3",0.0006,True,"0.01,10",real
-"s4",0.01491153,True,"0.01,10",real
-"s5",0.6,True,"0.01,10",real
+"s1",1,False,"0.01,1",real
+"s2",1,False,"0.01,1",real
+"s3",0.0006,True,"0.01,1",real
+"s4",0.01491153,True,"0.01,1",real
+"s5",0.6,True,"0.01,1",real
 "Km1",1,False,"0.01,1",real
 "Km2",1,False,"0.01,1",real
 "n1",1,True,"1,10",int

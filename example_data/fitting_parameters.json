@@ -1,0 +1,9 @@
+{
+	"max_num_iteration": 200,
+	"population_size":100,
+        "mutation_probability":0.30,
+        "elit_ratio": 0.01,
+        "parents_portion": 0.3,
+       	"crossover_type":"uniform",
+        "max_iteration_without_improv": 100
+}

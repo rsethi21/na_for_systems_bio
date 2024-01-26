@@ -291,4 +291,5 @@ class Network:
                            )
         
         fitting_model.run(set_function=ga.set_function_multiprocess(loss, n_jobs=mlp))
+        self.set_parameters(fitting_model.result.variable, names)
         return names, fitting_model.result.variable

@@ -13,7 +13,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-s", "--substrates", help="substrates csv", required=True)
 parser.add_argument("-r", "--rates", help="rates csv", required=True)
 parser.add_argument("-i", "--interactions", help="interactions csv", required=True)
-parser.add_argument("-f", "--fitting", help="fitting parameters json file", required=False,default=None)
+parser.add_argument("-f", "--fitting", help="fitting parameters json file", required=True)
+parser.add_argument("-a", "--arguments", help="fitting algorithm arguments json file", required=True)
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -94,21 +95,12 @@ if __name__ == "__main__":
         interactions.append(interaction_obj)
     
     # pdb.set_trace()
-    argues = {'max_num_iteration': 10,\
-                    'population_size':100,\
-                    'mutation_probability':0.30,\
-                    'elit_ratio': 0.01,\
-                    'parents_portion': 0.3,\
-                    'crossover_type':'uniform',\
-                    'max_iteration_without_improv': 5}
+    with open(args.arguments, "r") as argument_file:
+        argues = json.load(argument_file)
     network = Network("example", rates, interactions, substrates)
     time = np.array([i for i in range(500)])
-    print(network.identifier)
     derivatives = network.get_representation_dydt()
-    for key, value in derivatives.items():
-        print(key)
-        print(value)
-        print()
-    # pdb.set_trace()
-    network.fit(fit_dictionary, time, argues, normalize=True, mlp=6)
+    network.fit(fit_dictionary, time, argues, normalize=True, mlp=7)
+    with open("./fitted_params.json", "w") as out_file:
+        json.dump({i: r.value for i, r in network.parameters.items()}, out_file)
     network.graph_distributions(time, 1000, substrates_to_plot=["PI3K", "pAKT", "pPTEN", "Phagocytosis", "LPS", "HDACi"], normalize=True)
