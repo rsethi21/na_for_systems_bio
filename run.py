@@ -3,6 +3,7 @@ import numpy as np
 import argparse
 import pdb
 import json
+import os
 
 from substrate import Substrate
 from interaction import Interaction
@@ -15,6 +16,7 @@ parser.add_argument("-r", "--rates", help="rates csv", required=True)
 parser.add_argument("-i", "--interactions", help="interactions csv", required=True)
 parser.add_argument("-f", "--fitting", help="fitting parameters json file", required=True)
 parser.add_argument("-a", "--arguments", help="fitting algorithm arguments json file", required=True)
+parser.add_argument("-o", "--output", help="path to the output directory to save output files", required=False, default=".")
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -101,6 +103,6 @@ if __name__ == "__main__":
     time = np.array([i for i in range(500)])
     derivatives = network.get_representation_dydt()
     network.fit(fit_dictionary, time, argues, normalize=True, mlp=7)
-    with open("./fitted_params.json", "w") as out_file:
+    with open(os.path.join(args.output, "fitted_params.json"), "w") as out_file:
         json.dump({i: r.value for i, r in network.parameters.items()}, out_file)
-    network.graph_distributions(time, 1000, substrates_to_plot=["PI3K", "pAKT", "pPTEN", "Phagocytosis", "LPS", "HDACi"], normalize=True)
+    network.graph_distributions(time, 1000, substrates_to_plot=["PI3K", "pAKT", "pPTEN", "Phagocytosis", "LPS", "HDACi"], normalize=True, path=os.path.join(args.output, "figure.png"))
