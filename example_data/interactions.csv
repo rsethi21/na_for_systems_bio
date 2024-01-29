@@ -18,3 +18,5 @@ identifier,affected,effector,rate,effect,dissociation,hill_coefficient
 "int15","TNFa","pAKT","r6",None,None,None
 "int16","Phagocytosis","pAKT","k7",None,None,None
 "int17","Phagocytosis","PTEN","r7",None,None,None
+"int20","PI3K","LY294-002","s4",-1,None,None
+"int21","PI3K","PI3K","s4",-1,None,None

@@ -10,9 +10,9 @@ identifier,iv,type,k,r,mv,trs,other
 "pGSK3B",1.0,"non-stimulus","r5","k5",None,None,"GSK3B"
 "TNFa",0.0,"non-stimulus","k6","r6",None,None,None
 "LPS",0.0,"stimulus",None,None,1.0,"60,240",None
-"HDACi",0.0,"stimulus",None,None,1.0,None,None
+"HDACi",0.0,"stimulus",None,None,1.0,"300,420",None
 "ATP_metabotropic",0.0,"stimulus",None,None,1.0,None,None
 "Phagocytosis",0.0,"non-stimulus","k7","r7",None,None,None
-"LY294-002",0.0,"stimulus",None,None,1.0,None,None
+"LY294-002",0.0,"stimulus",None,None,1.0,"295,420",None
 "ATP_ionotropic",0.0,"stimulus",None,None,1.0,None,None
 "Calcium",0.0,"stimulus",None,None,1.0,None,None

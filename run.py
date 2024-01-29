@@ -20,7 +20,7 @@ parser.add_argument("-f", "--fitting", help="fitting parameters json file", requ
 parser.add_argument("-a", "--arguments", help="fitting algorithm arguments json file", required=False, default=None)
 parser.add_argument("-o", "--output", help="path to the output directory to save output files", required=False, default=".")
 parser.add_argument("-p", "--parameters", help="pretrained parameters json file", required=False, default=None)
-parser.add_argument("-m", "--multi", help="number of processers to use for fitting", required=False, default=1)
+parser.add_argument("-m", "--multi", help="number of processers to use for fitting", type=int, required=False, default=1)
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -34,7 +34,12 @@ if __name__ == "__main__":
     derivatives = network.get_representation_dydt()
     print(derivatives)
 
-    if args.parameters == None and args.fitting != None and args.arguments != None:
+    if args.parameters != None:
+        with open(args.parameters, "r") as fitted_params:
+            parameters = json.load(fitted_params)
+        network.set_parameters(list(parameters.values()), list(parameters.keys()))
+
+    if args.fitting != None and args.arguments != None:
         with open(args.fitting, "r") as file:
             fit_dictionary = json.load(file)
         with open(args.arguments, "r") as argument_file:
@@ -42,10 +47,6 @@ if __name__ == "__main__":
         network.fit(fit_dictionary, time, argues, normalize=True, mlp=args.multi)
         with open(os.path.join(args.output, "fitted_params.json"), "w") as out_file:
             json.dump({i: r.value for i, r in network.parameters.items()}, out_file)
-    else:
-        with open(args.parameters, "r") as fitted_params:
-            parameters = json.load(fitted_params)
-        network.set_parameters(list(parameters.values()), list(parameters.keys()))
     
     y, f = network.graph_distributions(time, 500, substrates_to_plot=["PI3K", "pAKT", "pPTEN", "Phagocytosis", "LPS", "HDACi"], normalize=True, path=os.path.join(args.output, "figure.png"), output_figure=True)
 
