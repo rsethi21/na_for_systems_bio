@@ -16,6 +16,10 @@ class Network:
         self.initial_parameter_values = {parameter_id: parameter.__getattribute__("value") for parameter_id, parameter in self.parameters.items()}
         self.parsed_interactions = self.parse_interactions()
         self.rates = rates
+
+        np.random.seed(2024)
+        self.colors = list(mcolors.CSS4_COLORS.keys())
+        np.random.shuffle(self.colors)
     
     def get_all_parameters(self):
         parameters = {}
@@ -49,6 +53,10 @@ class Network:
             y0.append(substrate.__getattribute__("initial_value"))
         return y0
     
+    def set_initials(self, new_initials):
+        for substrate, new_initial in zip(list(self.substrates.values()), new_initials):
+            substrate.__setattr__("initial_value", new_initial)
+
     def set_currents(self, new_initials):
         for substrate, new_initial in zip(list(self.substrates.values()), new_initials):
             substrate.__setattr__("current_value", new_initial)
@@ -202,9 +210,7 @@ class Network:
 
         return dydt
     
-    def graph(self, time, normalize=False, substrates_to_plot=None, path="./figure.png"):
-        colors = list(mcolors.CSS4_COLORS.keys())
-        np.random.shuffle(colors)
+    def graph(self, time, normalize=False, substrates_to_plot=None, path="./figure.png", output_figure=False):
         if normalize:
             stimuli_ranges = []
             for s in self.substrates.values():
@@ -224,21 +230,22 @@ class Network:
                         y[t, index] = folds_y[t,index]
         else:
             y = odeint(self.get_dydt, self.get_initials(), time)
+        fig = plt.figure() 
         if path != None:
-            fig = plt.figure()
             for i, substrate in tqdm(enumerate(list(self.substrates.values())), desc="Plotting Each Substrate", total=len(self.substrates)):
                 if substrate.identifier in substrates_to_plot:
-                    plt.plot(time, y[:,i], colors[i], label=substrate.__getattribute__("identifier"))
+                    plt.plot(time, y[:,i], self.colors[i], label=substrate.__getattribute__("identifier"))
             plt.xlabel("Time (mins)",fontsize=12)
             plt.ylabel("Concentration (AU)",fontsize=12)
             plt.legend(loc="upper right", fontsize=5)
             fig.savefig(path)
-            plt.close(fig)
-        return y
+        plt.close(fig)
+        if output_figure:
+            return y, fig
+        else:
+            return y
 
-    def graph_distributions(self, time, samples, normalize=False, substrates_to_plot=[], path="./figure_with_area.png"):
-        colors = list(mcolors.CSS4_COLORS.keys())
-        np.random.shuffle(colors)
+    def graph_distributions(self, time, samples, normalize=False, substrates_to_plot=[], path="./figure_with_area.png", output_figure=False):
         y0s = []
         for _ in tqdm(range(samples),desc="Generating Random Initial",total=samples):
             y0 = []
@@ -246,26 +253,32 @@ class Network:
                 if s.type == "stimulus":
                     y0.append(0.0)
                 else:
-                    y0.append(2**np.random.randn())
+                    y0.append(5*np.random.rand())
             y0s.append(y0)
         ys = []
         for y0 in tqdm(y0s, desc="Generating Simulations"):
+            self.set_initials(y0)
             ys.append(self.graph(time, normalize=normalize, path=None))
         min_y = np.mean(ys, axis=0) - np.std(ys, axis=0)*2
         max_y = np.mean(ys, axis=0) + np.std(ys, axis=0)*2
         mean_y = np.mean(ys, axis=0)
+        temp_fig = plt.figure()
         if path != None:
-            temp_fig = plt.figure()
             for i, s in tqdm(enumerate(self.substrates.values()), desc="Plotting Each Substrates", total=len(self.substrates)):
                 if s.identifier in substrates_to_plot:
-                    plt.fill_between(time, min_y[:,i], max_y[:,i], color=colors[i])
-                    plt.plot(time, mean_y[:,i], color=colors[i],label=s.__getattribute__("identifier"),linewidth=1.0)
+                    if s.type != "stimulus":
+                        plt.fill_between(time, min_y[:,i], max_y[:,i], color=self.colors[i], alpha=0.2)
+                    plt.plot(time, mean_y[:,i], color=self.colors[i],label=s.__getattribute__("identifier"),linewidth=1.0)
             plt.xlabel("Time (mins)")
             plt.ylabel("Concentration (AU)")
             plt.legend(loc="upper right", fontsize=5)
             temp_fig.savefig(path)
             print(f"Figure saved: {path}")
-        return mean_y
+        plt.close(temp_fig)
+        if output_figure:
+            return mean_y, temp_fig
+        else:
+            mean_y
 
     def fit(self, data, time, arguments, normalize=False, obj_calc=None, mlp=1):
         bounds, bound_types, names = self.get_bounds_information()
