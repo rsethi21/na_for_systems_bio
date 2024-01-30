@@ -1,7 +1,7 @@
 import pandas as pd
-from rate import Rate
-from interaction import Interaction
-from substrate import Substrate
+from src.rate import Rate
+from src.interaction import Interaction
+from src.substrate import Substrate
 
 def parse_rates(rates_csv_path):
     rates_df = pd.read_csv(rates_csv_path)

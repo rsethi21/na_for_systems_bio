@@ -6,12 +6,12 @@ import pdb
 import json
 import os
 
-from substrate import Substrate
-from interaction import Interaction
-from rate import Rate
-from network import Network
-from parse import parse_rates, parse_substrates, parse_interactions
-from score import error
+from src.substrate import Substrate
+from src.interaction import Interaction
+from src.rate import Rate
+from src.network import Network
+from src.parse import parse_rates, parse_substrates, parse_interactions
+from src.score import error
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-s", "--substrates", help="substrates csv", required=True)
