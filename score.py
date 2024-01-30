@@ -1,4 +1,4 @@
-# default sse
+# default approximates mse
 def error(predictions, data, substrate_names, obj_calc=None):
     cost = 0
     count = 0
