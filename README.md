@@ -1,14 +1,18 @@
 # Network Analysis for System Biology
 
-## Summary
+## Object Scripts
+- **network.py**: 
+- **substrate.py**: 
+- **rate.py**: 
+- **interaction.py**: 
 
-### Object Scripts
+## Processing Scripts
+- **parse.py**: Contains rate, substrate, interaction parsing functions. These will take in the associated csvs and creates lists of rate, substrate, and interaction objects for the network object. For information about how to use these functions please look into file.
 
-### Processing Scripts
+## Evaluation Scripts
+- **score.py**: This script contains a function that will calculate the unexplained error of the model. This function takes in the predictions, ground truths, list of substrate names that encode the order of the prediction columns and optional objective function. The function will by default calculate mean square error but can be changed if pass through a objective function with inputs of a single prediction and associated truth and output of a cost.
 
-### Evaluation Scripts
-
-### Experimental Scripts
+## Experimental Scripts
 - **model_fitting_and_evaluation.py**:
 	- This script creates a network object with the requested inputs and in return finds an optimal solution to network kinetic rates and compares the mean square error before and after fitting. This script also manually validates the model on other small datasets.
 	- How to run:
@@ -33,9 +37,6 @@
 	```
 - **[your_requirements].py**:
 	- You can design your own experiments. The network object has various toolings available to customize an analysis and generate data that can be graphed and manipulated for custom analysis.
-## Inputs
-
-## Outputs
 
 ## Requirements
 - numpy
