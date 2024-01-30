@@ -245,18 +245,21 @@ class Network:
         else:
             return y
 
-    def graph_distributions(self, time, samples, normalize=False, substrates_to_plot=[], path="./figure_with_area.png", output_figure=False):
-        y0s = []
-        for _ in tqdm(range(samples),desc="Generating Random Initial",total=samples):
-            y0 = []
-            for i, s in enumerate(self.substrates.values()):
-                if s.type == "stimulus":
-                    y0.append(0.0)
-                else:
-                    y0.append(2**np.random.randn())
-            y0s.append(y0)
+    def graph_distributions(self, time, samples, normalize=False, substrates_to_plot=[], path="./figure_with_area.png", output_figure=False, initials=None, verbose=True):
+        if initials == None:
+            y0s = []
+            for _ in tqdm(range(samples),desc="Generating Random Initial",total=samples, disable=~verbose):
+                y0 = []
+                for i, s in enumerate(self.substrates.values()):
+                    if s.type == "stimulus":
+                        y0.append(0.0)
+                    else:
+                        y0.append(2**np.random.randn())
+                y0s.append(y0)
+        else:
+            y0s = initials
         ys = []
-        for y0 in tqdm(y0s, desc="Generating Simulations"):
+        for y0 in tqdm(y0s, desc="Generating Simulations", disable=~verbose):
             self.set_initials(y0)
             ys.append(self.graph(time, normalize=normalize, path=None))
         min_y = np.mean(ys, axis=0) - np.std(ys, axis=0)*2
@@ -264,7 +267,7 @@ class Network:
         mean_y = np.mean(ys, axis=0)
         temp_fig = plt.figure()
         if path != None:
-            for i, s in tqdm(enumerate(self.substrates.values()), desc="Plotting Each Substrates", total=len(self.substrates)):
+            for i, s in tqdm(enumerate(self.substrates.values()), desc="Plotting Each Substrates", total=len(self.substrates), disable=~verbose):
                 if s.identifier in substrates_to_plot:
                     if s.type != "stimulus":
                         plt.fill_between(time, min_y[:,i], max_y[:,i], color=self.colors[i], alpha=0.2)
