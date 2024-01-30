@@ -278,7 +278,7 @@ class Network:
         if output_figure:
             return mean_y, temp_fig
         else:
-            mean_y
+            return mean_y
 
     def fit(self, data, time, arguments, normalize=False, obj_calc=None, mlp=1):
         bounds, bound_types, names = self.get_bounds_information()

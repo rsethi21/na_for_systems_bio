@@ -11,6 +11,7 @@ from interaction import Interaction
 from rate import Rate
 from network import Network
 from parse import parse_rates, parse_substrates, parse_interactions
+from score import error
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-s", "--substrates", help="substrates csv", required=True)
@@ -39,6 +40,18 @@ if __name__ == "__main__":
     time = np.array([i for i in range(500)])
     derivatives = network.get_representation_dydt()
     print(derivatives)
+    print()
+
+    # open fitting data
+    with open(args.fitting, "r") as file:
+        fit_dictionary = json.load(file)
+
+    # check unfitted rates error
+    print("Randomly Generated Error")
+    network.set_parameters(np.random.rand(len([p for p in network.parameters.values() if p.fixed==False])), [p.identifier for p in network.parameters.values() if p.fixed==False])
+    original = network.graph_distributions(time, args.number, normalize=True, path=None)
+    print(error(original, fit_dictionary, list(network.substrates.keys())))
+    print()
 
     # load in pretrained parameters if any
     if args.parameters != None:
@@ -47,7 +60,7 @@ if __name__ == "__main__":
         network.set_parameters(list(parameters.values()), list(parameters.keys()))
 
     # train model if needed
-    if args.fitting != None or args.arguments != None:
+    if args.fitting != None and args.arguments != None:
         with open(args.fitting, "r") as file:
             fit_dictionary = json.load(file)
         with open(args.arguments, "r") as argument_file:
@@ -56,17 +69,34 @@ if __name__ == "__main__":
         with open(os.path.join(args.output, "fitted_params.json"), "w") as out_file:
             json.dump({i: r.value for i, r in network.parameters.items()}, out_file)
     
-    # create area plots for the network
-    y, f = network.graph_distributions(time, args.number, substrates_to_plot=["PI3K", "pAKT", "pPTEN", "Phagocytosis", "LPS", "HDACi"], normalize=True, path=os.path.join(args.output, "figure.png"), output_figure=True)
+    # check post-training training error
+    print("LPS, HDACi, LY294-002 Error")
+    mean_y, f = network.graph_distributions(time, args.number, substrates_to_plot=["PI3K", "pAKT", "pPTEN", "Phagocytosis", "LPS", "HDACi", "GSK3B", "LY294-002"], normalize=True, path=os.path.join(args.output, "figure.png"), output_figure=True)
+    print(error(mean_y, fit_dictionary, list(network.substrates.keys())))
+    print()
 
-    # plot fitting data to visually evaluate the fit
-    plt.figure(f)
-    times = [60, 240, 245, 250, 260, 270, 300]
-    times2 = [420, 420, 420, 420]
-    values = [0.4, 0.4, 0.6, 1.1]
-    names = ["pAKT", "PIP3", "pPTEN", "GSK3B"]
-    phagocytosis_ys = [1.0, 0.3235695, 0.35537492, 0.33414908, 0.34072799, 0.46634439, 0.44325203]
-    
-    plt.scatter(times, phagocytosis_ys, s=2, color=network.colors[list(network.substrates.keys()).index("Phagocytosis")])
-    plt.scatter(times2, values, s=2, color=[network.colors[list(network.substrates.keys()).index(n)] for n in names])
-    f.savefig(os.path.join(args.output, "figure_w_data.png"))
+    # check post-training validation error
+    print("LPS and HDACi Error")
+    network.substrates["LY294-002"].time_ranges = None
+    lps_hdaci = {
+        "pAKT": {"410": 0.8, "420": 0.8,},
+        "pPTEN": {"410": 1.4, "420": 1.4,},
+        "PIP3": {"410": 0.8, "420": 0.8,},
+        "GSK3B": {"410": 1.1, "420": 1.1,}
+        }
+    mean_lps_hdaci_y = network.graph_distributions(time, args.number, normalize=True, path=None)
+    print(error(mean_lps_hdaci_y, lps_hdaci, list(network.substrates.keys())))
+    print()
+
+    print("LPS Error")
+    network.substrates["HDACi"].time_ranges = None
+    lps = {
+        "pAKT": {"410": 0.2, "420": 0.2,},
+        "pPTEN": {"410": 0.6, "420": 0.6,},
+        "PIP3": {"410": 0.2, "420": 0.2,},
+        "GSK3B": {"410": 0.7, "420": 0.7,},
+        "Phagocytosis": {"360": 0.80413556, "420": 1.04238109}
+        }
+    mean_lps_y = network.graph_distributions(time, args.number, normalize=True, path=None)
+    print(error(mean_lps_y, lps, list(network.substrates.keys())))
+    print()
