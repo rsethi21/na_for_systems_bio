@@ -16,7 +16,7 @@
         python3 model_fitting_and_evaluation.py [-h] -s SUBSTRATES -r RATES -i INTERACTIONS [-f FITTING] [-a ARGUMENTS]
                                        [-o OUTPUT] [-p PARAMETERS] [-m MULTI] [-n NUMBER] [-t [TOPLOT ...]]
         ```
-        - To get information on these parameters:
+	- To get information on these parameters:
         ```
         python3 model_fitting_and_evaluation.py -h
         ```
