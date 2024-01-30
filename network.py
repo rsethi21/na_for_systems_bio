@@ -253,7 +253,7 @@ class Network:
                 if s.type == "stimulus":
                     y0.append(0.0)
                 else:
-                    y0.append(5*np.random.rand())
+                    y0.append(2**np.random.randn())
             y0s.append(y0)
         ys = []
         for y0 in tqdm(y0s, desc="Generating Simulations"):
