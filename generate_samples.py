@@ -7,7 +7,7 @@ import json
 import os
 from tqdm import tqdm
 import concurrent.futures as cf
-from itertools import repeat
+from itertools import repeat, permutations
 
 from src.substrate import Substrate
 from src.interaction import Interaction
@@ -47,8 +47,6 @@ if __name__ == "__main__":
     # visualize network ordinary differential equations
     time = np.array([i for i in range(500)])
     derivatives = network.get_representation_dydt()
-    print(derivatives)
-    print()
 
     # load in pretrained parameters if any
     if args.parameters != None:
@@ -57,27 +55,37 @@ if __name__ == "__main__":
         network.set_parameters(list(parameters.values()), list(parameters.keys()))
 
     # set appropriate conditions
-    conditions = ["LPS", "HDACi", "LY294-002"] 
-    for c in conditions:
-        network.substrates[c].time_ranges = [[60, 240]]
-
-    # generate data
-    y0s = []
-    samples = 50
-    for _ in tqdm(range(samples),desc="Generating Random Initial",total=samples):
-        y0 = []
-        for i, s in enumerate(network.substrates.values()):
-            if s.type == "stimulus":
-                y0.append(0.0)
-            else:
-                y0.append(2**np.random.randn())
-        y0s.append(y0)
-    labels = ["LPS", "HDACi", "LY294-002"]
-    random_inputs = 2**np.random.randn(args.number, 3)
-    subs = ["pAKT", "PI3K", "GSK3B", "PTEN"]
-    with cf.ProcessPoolExecutor(max_workers=args.multiprocess) as executor:
-        output = list(tqdm(executor.map(generate_output, random_inputs, repeat(labels), repeat(y0s), repeat(time), repeat(network), repeat(420), repeat(subs)), total=len(random_inputs), desc="Generating Data"))
-    output = np.array(output)
-    output_df = pd.DataFrame(random_inputs, columns=labels)
-    output_df[subs] = output
-    output_df.to_csv(os.path.join(args.output, "data.csv"))
+    conditions = permutations([[60, 120], [120, 180], [180, 240], [60, 240]], r = 3)
+    external = ["LPS", "HDACi", "LY294-002"]
+    data = []
+    for c in tqdm(conditions, desc="Random Initial"):
+        for i, e in enumerate(external):
+            network.substrates[e].time_ranges = c[i]
+        # random initial states 
+        y0s = []
+        samples = 50
+        for _ in tqdm(range(samples),desc="Generating Random Initial",total=samples):
+            y0 = []
+            for i, s in enumerate(network.substrates.values()):
+                if s.type == "stimulus":
+                    y0.append(0.0)
+                else:
+                    y0.append(2**np.random.randn())
+            y0s.append(y0)
+        # generate samples
+        labels = ["LPS", "HDACi", "LY294-002"]
+        random_inputs = 2**np.random.randn(args.number, 3)
+        subs = ["AKT", "pAKT", "PI3K", "GSK3B", "pGSK3B", "PTEN", "pPTEN"]
+        with cf.ProcessPoolExecutor(max_workers=args.multiprocess) as executor:
+            output = list(tqdm(executor.map(generate_output, random_inputs, repeat(labels), repeat(y0s), repeat(time), repeat(network), repeat(420), repeat(subs)), total=len(random_inputs), desc="Generating Data"))
+        output = np.array(output)
+        output_df = pd.DataFrame(random_inputs, columns=labels)
+        output_df[[f"{ext}_start"]] = np.array([c_i[0] for c_i in c])*len(random_inputs)
+        output_df[[f"{ext}_end"]] = np.array([c_i[1] for c_i in c])*len(random_inputs)
+        output_df["measure_time"] = [420 for _ in range(len(random_inputs))]
+        output_df[subs] = output
+        data.append(output_df)
+    final_df = data[0]
+    for df in data[1:]:
+        final_df = final_df.append(df, ignore_index=True)
+    final_df.to_csv(os.path.join(args.output, "data.csv"))
