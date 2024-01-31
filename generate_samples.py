@@ -68,7 +68,7 @@ if __name__ == "__main__":
     
     # set appropriate conditions
     ranges = [[60, 120], [120, 180], [180, 240], [60, 240]]
-    conditions = list(product(ranges[3:], ranges[3:], ranges[3:]))
+    conditions = list(product(ranges, ranges, ranges))
     external = ["LPS", "HDACi", "LY294-002"]
     data = []
     for i_c, c in tqdm(enumerate(conditions), desc="Different Ranges", total=len(conditions)):
