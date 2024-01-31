@@ -60,7 +60,7 @@ if __name__ == "__main__":
     data = []
     for c in tqdm(conditions, desc="Random Initial"):
         for i, e in enumerate(external):
-            network.substrates[e].time_ranges = c[i]
+            network.substrates[e].time_ranges = [c[i]]
         # random initial states 
         y0s = []
         samples = 50
@@ -80,8 +80,8 @@ if __name__ == "__main__":
             output = list(tqdm(executor.map(generate_output, random_inputs, repeat(labels), repeat(y0s), repeat(time), repeat(network), repeat(420), repeat(subs)), total=len(random_inputs), desc="Generating Data"))
         output = np.array(output)
         output_df = pd.DataFrame(random_inputs, columns=labels)
-        output_df[[f"{ext}_start"]] = np.array([c_i[0] for c_i in c])*len(random_inputs)
-        output_df[[f"{ext}_end"]] = np.array([c_i[1] for c_i in c])*len(random_inputs)
+        output_df[[f"{ext}_start" for ext in external]] = np.array([c_i[0] for c_i in c])*len(random_inputs)
+        output_df[[f"{ext}_end" for ext in external]] = np.array([c_i[1] for c_i in c])*len(random_inputs)
         output_df["measure_time"] = [420 for _ in range(len(random_inputs))]
         output_df[subs] = output
         data.append(output_df)
