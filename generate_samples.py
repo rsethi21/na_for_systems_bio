@@ -25,13 +25,13 @@ parser.add_argument("-p", "--parameters", help="pretrained parameters json file"
 parser.add_argument("-n", "--number", help="number of random samples for area plot", type=int, required=False, default=500)
 parser.add_argument("-m", "--multiprocess", help="number of threads", required=False, type=int, default=1)
 
-def generate_output(random_input, labels, y0s, time, network):
+def generate_output(random_input, labels, y0s, time, network, time_to_extract = 0, substrates_to_track=["Phagocytosis"]):
     for i, l in zip(random_input, labels):
         network.substrates[l].max_value = i
     mean_y = network.graph_distributions(time, None, normalize=True, path=None, initials=y0s, verbose=False)
-    phagocytosis = mean_y[240, list(network.substrates.keys()).index("Phagocytosis")]
-    final = mean_y[420, list(network.substrates.keys()).index("Phagocytosis")]
-    return [phagocytosis, final]
+    indices_to_extract = [list(network.substrates.keys()).index(s) for s in substrates_to_track]
+    response = mean_y[time_to_extract, indices_to_extract]
+    return response
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -74,13 +74,10 @@ if __name__ == "__main__":
         y0s.append(y0)
     labels = ["LPS", "HDACi", "LY294-002"]
     random_inputs = 2**np.random.randn(args.number, 3)
+    subs = ["pAKT", "PI3K", "GSK3B", "PTEN"]
     with cf.ProcessPoolExecutor(max_workers=args.multiprocess) as executor:
-        output = list(tqdm(executor.map(generate_output, random_inputs, repeat(labels), repeat(y0s), repeat(time), repeat(network)), total=len(random_inputs), desc="Generating Data"))
+        output = list(tqdm(executor.map(generate_output, random_inputs, repeat(labels), repeat(y0s), repeat(time), repeat(network), repeat(420), repeat(subs)), total=len(random_inputs), desc="Generating Data"))
     output = np.array(output)
-    print(output)
-    phagocytosis = output[:,0]
-    final = output[:,1]
     output_df = pd.DataFrame(random_inputs, columns=labels)
-    output_df["Right After Phagocytosis"] = phagocytosis
-    output_df["3-hour Phagocytosis"] = final
+    output_df[subs] = output
     output_df.to_csv(os.path.join(args.output, "data.csv"))
