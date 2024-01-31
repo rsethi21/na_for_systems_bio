@@ -68,7 +68,7 @@ if __name__ == "__main__":
     
     # set appropriate conditions
     ranges = [[60, 120], [120, 180], [180, 240], [60, 240]]
-    conditions = list(product(ranges, ranges, ranges))
+    conditions = list(product(ranges[3:], ranges[3:], ranges[3:]))
     external = ["LPS", "HDACi", "LY294-002"]
     data = []
     for i_c, c in tqdm(enumerate(conditions), desc="Different Ranges", total=len(conditions)):
@@ -78,7 +78,7 @@ if __name__ == "__main__":
         random_inputs = 10**np.random.normal(0, 0.33, size=(args.number, 3))
         # generate samples
         labels = ["LPS", "HDACi", "LY294-002"]
-        subs = ["AKT", "pAKT", "PI3K", "GSK3B", "pGSK3B", "PTEN", "pPTEN"]
+        subs = ["AKT", "pAKT", "PI3K", "GSK3B", "pGSK3B", "PTEN", "pPTEN", "Phagocytosis"]
         with cf.ProcessPoolExecutor(max_workers=args.multiprocess) as executor:
             output = list(tqdm(executor.map(generate_output, random_inputs, repeat(labels), repeat(y0s), repeat(time), repeat(network), repeat(420), repeat(subs)), total=len(random_inputs), desc=f"Generating Data with Range Pairs {c}"))
         output = np.array(output)
