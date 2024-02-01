@@ -68,7 +68,6 @@ if __name__ == "__main__":
     
     # set appropriate conditions
     ranges = [[60, 120], [120, 180], [180, 240], [60, 240]]
-    ranges = [[60, 120], [120, 180]]
     conditions = list(product(ranges, ranges, ranges))
     external = ["LPS", "HDACi", "LY294-002"]
     data = []
