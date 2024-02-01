@@ -68,6 +68,7 @@ if __name__ == "__main__":
     
     # set appropriate conditions
     ranges = [[60, 120], [120, 180], [180, 240], [60, 240]]
+    ranges = [[60, 120], [120, 180]]
     conditions = list(product(ranges, ranges, ranges))
     external = ["LPS", "HDACi", "LY294-002"]
     data = []
@@ -90,5 +91,8 @@ if __name__ == "__main__":
         data.append(output_df)
     final_df = data[0]
     for df in data[1:]:
-        final_df = final_df._append(df, ignore_index=True)
+        try:
+            final_df = final_df._append(df, ignore_index=True)
+        except:
+            final_df = final_df.append(df, ignore_index=True)
     final_df.to_csv(os.path.join(args.output, "data.csv"))
