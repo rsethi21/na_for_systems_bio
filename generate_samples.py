@@ -71,7 +71,6 @@ if __name__ == "__main__":
     
     # set appropriate conditions
     ranges = [[60, 120], [120, 180], [180, 240], [90, 210], [60, 240], None]
-    pdb.set_trace()
     conditions = list(product(ranges, ranges, ranges))
     external = ["LPS", "HDACi", "LY294-002"]
     data = []
@@ -87,7 +86,10 @@ if __name__ == "__main__":
                 pass
             else:
                 possible.extend(p)
-        measure_times = [max(possible), max(possible) + 180]
+        if len(possible) != 0:
+            measure_times = [max(possible), max(possible) + 180]
+        else:
+            measure_times = [240, 420]
         # random external stimuli
         random_inputs = 10**np.random.normal(0, 0.33, size=(args.number, 3))
         # generate samples
