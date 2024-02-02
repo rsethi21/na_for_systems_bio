@@ -4,8 +4,14 @@
 ### network.py
 ### substrate.py
 ### rate.py:
-### interaction.py:
 <details open>
+
+<summary>
+
+### interaction.py:
+
+</summary>
+
 #### Summary
     The interaction class acts as a data store for parameters and rules that govern how two substrates in the network are affected.
 
