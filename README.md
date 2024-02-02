@@ -4,7 +4,8 @@
 ### network.py
 ### substrate.py
 ### rate.py: 
-### interaction.py:
+<details open>
+<summary>### interaction.py:</summary>
 #### Summary
     The interaction class acts as a data store for parameters and rules that govern how two substrates in the network are affected.
 
@@ -40,6 +41,7 @@
             obtain all associated rates for the interaction of interest
 
 For more information, check doc strings of each function individually.
+</details>
 
 ## Processing Scripts
 - **parse.py**: Contains rate, substrate, interaction parsing functions. These will take in the associated csvs and creates lists of rate, substrate, and interaction objects for the network object. For information about how to use these functions please look into file.
