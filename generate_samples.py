@@ -30,8 +30,11 @@ def generate_output(random_input, labels, y0s, time, network, time_to_extract = 
         network.substrates[l].max_value = i
     mean_y = network.graph_distributions(time, None, normalize=True, path=None, initials=y0s, verbose=False)
     indices_to_extract = [list(network.substrates.keys()).index(s) for s in substrates_to_track]
-    response = mean_y[time_to_extract, indices_to_extract]
-    return response
+    output = []
+    for t in time_to_extract:
+        response = list(mean_y[t, indices_to_extract])
+        output.extend(response)
+    return output
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -67,7 +70,8 @@ if __name__ == "__main__":
         y0s.append(y0)
     
     # set appropriate conditions
-    ranges = [[60, 120], [120, 180], [180, 240], [60, 240], None]
+    ranges = [[60, 120], [120, 180], [180, 240], [90, 210], [60, 240], None]
+    pdb.set_trace()
     conditions = list(product(ranges, ranges, ranges))
     external = ["LPS", "HDACi", "LY294-002"]
     data = []
@@ -77,23 +81,30 @@ if __name__ == "__main__":
                 network.substrates[e].time_ranges = [c[i]]
             else:
                 network.substrates[e].time_ranges = c[i]
-        if c[0] != None: 
-            measure_time = c[0][1] + 180
-        else:
-            measure_time = time[-1]
+        possible = []
+        for p in c:
+            if p == None:
+                pass
+            else:
+                possible.extend(p)
+        measure_times = [max(possible), max(possible) + 180]
         # random external stimuli
         random_inputs = 10**np.random.normal(0, 0.33, size=(args.number, 3))
         # generate samples
         labels = ["LPS", "HDACi", "LY294-002"]
-        subs = ["AKT", "pAKT", "PI3K", "GSK3B", "pGSK3B", "PTEN", "pPTEN", "Phagocytosis"]
+        subs = ["AKT", "pAKT", "PI3K", "GSK3B", "pGSK3B", "PTEN", "pPTEN", "PIP2", "PIP3", "Phagocytosis"]
+        subs2 = ["AKT_2", "pAKT_2", "PI3K_2", "GSK3B_2", "pGSK3B_2", "PTEN_2", "pPTEN_2", "PIP2_2", "PIP3_2", "Phagocytosis_2"]
+        cols = subs.copy()
+        cols.extend(subs2)
         with cf.ProcessPoolExecutor(max_workers=args.multiprocess) as executor:
-            output = list(tqdm(executor.map(generate_output, random_inputs, repeat(labels), repeat(y0s), repeat(time), repeat(network), repeat(measure_time), repeat(subs)), total=len(random_inputs), desc=f"Generating Data with Range Pairs {c}"))
+            output = list(tqdm(executor.map(generate_output, random_inputs, repeat(labels), repeat(y0s), repeat(time), repeat(network), repeat(measure_times), repeat(subs)), total=len(random_inputs), desc=f"Generating Data with Range Pairs {c}"))
         output = np.array(output)
         output_df = pd.DataFrame(random_inputs, columns=labels)
         output_df[[f"{ext}_start" for ext in external]] = np.array([[c_i[0] if c_i != None else 0 for c_i in c]]*len(random_inputs))
         output_df[[f"{ext}_end" for ext in external]] = np.array([[c_i[1] if c_i != None else 0 for c_i in c]]*len(random_inputs))
-        output_df["measure_time"] = [measure_time for _ in range(len(random_inputs))]
-        output_df[subs] = output
+        output_df["measure_time1"] = [measure_times[0] for _ in range(len(random_inputs))]
+        output_df["measure_time2"] = [measure_times[1] for _ in range(len(random_inputs))]
+        output_df[cols] = output
         data.append(output_df)
     final_df = data[0]
     for df in data[1:]:
