@@ -1,16 +1,14 @@
 # Network Analysis for System Biology
 
 ## Object Scripts
-###**network.py**
-**###substrate.py**
-**###rate.py**: 
-- **interaction.py**:
-Summary
-    -------
+### network.py
+### substrate.py
+### rate.py: 
+### interaction.py:
+#### Summary
     The interaction class acts as a data store for parameters and rules that govern how two substrates in the network are affected.
 
-    Attributes
-    ----------
+#### Attributes
     identifier: str
         - a key unique to an interaction between two substrates and can be used to refer to an interaction
         - required
@@ -33,8 +31,7 @@ Summary
         - rate object that encodes the multiplicity of the two substrates (number of binding sites required); include if the interaction follows a feedback regulation mechanism; this package utilizes a goodwin oscillator mechanism to establish positive and negative feedback relationships; for more information see: https://pubmed.ncbi.nlm.nih.gov/32212037/
         - optional
 
-    Methods
-    -------
+#### Methods
     __init__():
             initialize the appropriate interaction objects and inform of any exceptions
     update_rate():
