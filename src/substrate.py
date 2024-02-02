@@ -1,6 +1,7 @@
 class Substrate:
 
     def __init__(self, identifier: str, iv: float, type: str, k: float = None, r: float = None, mv: float = None, trs: list = None, other: str = None):
+        
         self.identifier = identifier
         self.initial_value = iv
         self.current_value = iv

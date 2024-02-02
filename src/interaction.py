@@ -1,5 +1,6 @@
 class Interaction:
-    """
+    
+    """ 
     Summary
     -------
     The interaction class acts as a data store for parameters and rules that govern how two substrates in the network are affected.
