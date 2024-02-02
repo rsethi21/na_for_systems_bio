@@ -5,11 +5,9 @@
 ### substrate.py
 ### rate.py:
 <details open>
-
 <summary>
 
 ### interaction.py:
-
 </summary>
 
 #### Summary
