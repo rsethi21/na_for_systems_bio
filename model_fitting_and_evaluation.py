@@ -39,7 +39,8 @@ if __name__ == "__main__":
     # visualize network ordinary differential equations
     time = np.array([i for i in range(500)])
     derivatives = network.get_representation_dydt()
-    print(derivatives)
+    for l, t in derivatives.items():
+        print(f"{l} = {t}")
     print()
 
     # open fitting data
