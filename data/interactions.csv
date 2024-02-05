@@ -20,3 +20,8 @@ identifier,affected,effector,rate,effect,dissociation,hill_coefficient
 "int17","Phagocytosis","PTEN","r7",,,
 "int20","PI3K","LY294-002","s4",-1,,
 "int21","PI3K","PI3K","s4",-1,,
+"int22","P2Y12act",ATP,"k8",1,,
+"int23","P2Y12s",ATP,"k8",-1,,
+"int24","Gio","P2Y12act","k9",,,
+"int25","Gio","Gio","r9",,,
+"int26","PI3K","Gio","k1",,,
