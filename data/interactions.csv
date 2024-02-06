@@ -24,4 +24,4 @@ identifier,affected,effector,rate,effect,dissociation,hill_coefficient
 "int24","Gio","P2Y12act","k9",,,
 "int25","Gio","Gio","r9",,,
 "int26","PI3K","Gio","k1",1,,
-"int31","PI3K","PI3K","s4",-1,,
+"int27","PI3K","PI3K","s4",-1,,

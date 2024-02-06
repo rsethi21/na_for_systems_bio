@@ -48,4 +48,4 @@ if __name__ == "__main__":
 
     # check post-training training error
     network.substrates["ATP"].time_ranges = [[200, 400]]
-    mean_y, f = network.graph_distributions(time, args.number, substrates_to_plot=["PI3K", "pAKT", "pPTEN", "Phagocytosis", "LPS", "HDACi", "GSK3B", "LY294-002", "ATP"], normalize=True, path=os.path.join(args.output, "figure_atp.png"), output_figure=True)
+    mean_y, f = network.graph_distributions(time, args.number, substrates_to_plot=["PI3K", "pAKT", "pPTEN", "Phagocytosis", "LPS", "HDACi", "GSK3B", "LY294-002", "ATP", "PTEN"], normalize=True, path=os.path.join(args.output, "figure_atp.png"), output_figure=True)
