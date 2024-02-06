@@ -1,5 +1,5 @@
 identifier,value,fixed,bounds,bounds_type
-"k1",0.00001,True,"0.01,1",real
+"k1",0.001,True,"0.01,1",real
 "k2",1,False,"0.01,1",real
 "k3",1,False,"0.01,1",real
 "k4",1,False,"0.01,1",real
