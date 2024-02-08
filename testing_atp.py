@@ -34,7 +34,7 @@ if __name__ == "__main__":
     network = Network("example", rates, interactions, substrates)
     
     # visualize network ordinary differential equations
-    time = np.array([i for i in range(500)])
+    time = np.linspace(0, 500, num=501)
     derivatives = network.get_representation_dydt()
     for l, t in derivatives.items():
         print(f"{l} = {t}")
@@ -47,5 +47,4 @@ if __name__ == "__main__":
         network.set_parameters(list(parameters.values()), list(parameters.keys()))
 
     # check post-training training error
-    network.substrates["ATP"].time_ranges = [[200, 400]]
-    mean_y, f = network.graph_distributions(time, args.number, substrates_to_plot=["PI3K", "pAKT", "pPTEN", "Phagocytosis", "LPS", "HDACi", "GSK3B", "LY294-002", "ATP", "PTEN"], normalize=True, path=os.path.join(args.output, "figure_atp.png"), output_figure=True)
+    mean_y, f = network.graph_distributions(time, args.number, substrates_to_plot=["PI3K", "pAKT", "pPTEN", "Phagocytosis", "LPS", "HDACi", "GSK3B", "LY294-002"], normalize=True, path=os.path.join(args.output, "figure_atp.png"), output_figure=True)

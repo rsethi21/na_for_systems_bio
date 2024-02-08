@@ -10,10 +10,8 @@ class Substrate:
         #     self.type = type
         # else:
         #     raise ValueError("Type can only be one of the following: 'stimulus' or 'non-stimulus'")
-        if self.type == "stimulus":
-            self.max_value = mv
+        self.max_value = mv
         self.time_ranges = trs
-        if self.type == "non-stimulus":
-            self.k = k
-            self.r = r
+        self.k = k
+        self.r = r
         self.other = other

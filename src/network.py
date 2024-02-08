@@ -17,7 +17,7 @@ class Network:
         self.parsed_interactions = self.parse_interactions()
         self.rates = rates
 
-        np.random.seed(2024)
+        np.random.seed(2824)
         self.colors = list(mcolors.CSS4_COLORS.keys())
         np.random.shuffle(self.colors)
     
@@ -150,12 +150,22 @@ class Network:
                         else:
                             between = False
                             after = False
-                if between:
-                    dydt[substrate_id] = max_val - current_val
-                elif after:
-                    dydt[substrate_id] = -current_val
+                if substrate_of_interest.__getattribute__("r") != None and time_ranges != None:
+                    r = substrate_of_interest.__getattribute__("r").__getattribute__("value")
+                    set_it = [time - tr[0] <= 10 for tr in time_ranges]
+                    if current_val != max_val and True in set_it and between:
+                        dydt[substrate_id] = max_val - current_val
+                    elif after or between:
+                        dydt[substrate_id] = -1*r*current_val
+                    else:
+                        dydt[substrate_id] = 0
                 else:
-                    dydt[substrate_id] = 0
+                    if between:
+                        dydt[substrate_id] = max_val - current_val
+                    elif after:
+                        dydt[substrate_id] = -current_val
+                    else:
+                        dydt[substrate_id] = 0
 
         return list(dydt.values())
 
@@ -212,11 +222,12 @@ class Network:
     
     def graph(self, time, normalize=False, substrates_to_plot=None, path="./figure.png", output_figure=False):
         if normalize:
+            normalize_time = np.linspace(0, 4000, 4001)
             stimuli_ranges = []
             for s in self.substrates.values():
                 stimuli_ranges.append(s.time_ranges)
                 s.__setattr__("time_ranges", None)
-            probe = odeint(self.get_dydt, self.get_initials(), time)[-1]
+            probe = odeint(self.get_dydt, self.get_initials(), normalize_time)[-1]
             for index, s in enumerate(self.substrates.values()):
                 s.__setattr__("time_ranges", stimuli_ranges[index])
 
