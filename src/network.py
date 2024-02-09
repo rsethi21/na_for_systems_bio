@@ -222,7 +222,7 @@ class Network:
     
     def graph(self, time, normalize=False, substrates_to_plot=None, path="./figure.png", output_figure=False):
         if normalize:
-            normalize_time = np.linspace(0, 4000, 4001)
+            normalize_time = np.linspace(0, 500, 501)
             stimuli_ranges = []
             for s in self.substrates.values():
                 stimuli_ranges.append(s.time_ranges)

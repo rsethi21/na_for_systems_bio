@@ -72,7 +72,7 @@ if __name__ == "__main__":
             fit_dictionary = json.load(file)
         with open(args.arguments, "r") as argument_file:
             argues = json.load(argument_file)
-        network.fit(fit_dictionary, time, argues, number=10, normalize=True, mlp=args.multi)
+        network.fit(fit_dictionary, time, argues, number=5, normalize=True, mlp=args.multi)
         with open(os.path.join(args.output, "fitted_params.json"), "w") as out_file:
             json.dump({i: r.value for i, r in network.parameters.items()}, out_file)
     
