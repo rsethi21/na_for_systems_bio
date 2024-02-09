@@ -294,13 +294,13 @@ class Network:
         else:
             return mean_y
 
-    def fit(self, data, time, arguments, normalize=False, obj_calc=None, mlp=1):
+    def fit(self, data, time, arguments, number=1, normalize=False, obj_calc=None, mlp=1):
         bounds, bound_types, names = self.get_bounds_information()
         substrate_names = list(self.substrates.keys())
         def loss(X):
             self.set_parameters(X, names)
             cost = 0
-            predictions = self.graph(time, normalize=normalize, path=None)
+            predictions = self.graph_distributions(time, number, normalize=normalize, path=None, verbose=False)
             for substrate_id, substrate_data in data.items():
                 for time_point, truth in substrate_data.items():
                     prediction = predictions[int(time_point), substrate_names.index(substrate_id)]
