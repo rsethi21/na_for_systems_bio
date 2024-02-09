@@ -297,10 +297,19 @@ class Network:
     def fit(self, data, time, arguments, number=1, normalize=False, obj_calc=None, mlp=1):
         bounds, bound_types, names = self.get_bounds_information()
         substrate_names = list(self.substrates.keys())
+        y0s = []
+        for _ in tqdm(range(number),desc="Generating Random Initial",total=number, disable=True):
+            y0 = []
+            for i, s in enumerate(self.substrates.values()):
+                if s.type == "stimulus":
+                    y0.append(0.0)
+                else:
+                    y0.append(2**np.random.randn())
+            y0s.append(y0)
         def loss(X):
             self.set_parameters(X, names)
             cost = 0
-            predictions = self.graph_distributions(time, number, normalize=normalize, path=None, verbose=False)
+            predictions = self.graph_distributions(time, number, initials=y0s, normalize=normalize, path=None, verbose=False)
             for substrate_id, substrate_data in data.items():
                 for time_point, truth in substrate_data.items():
                     prediction = predictions[int(time_point), substrate_names.index(substrate_id)]

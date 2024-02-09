@@ -21,7 +21,7 @@ identifier,value,fixed,bounds,bounds_type
 "s1",1,False,"0.01,1",real
 "s2",1,False,"0.01,1",real
 "s3",0.00001,True,"0.01,1",real
-"s4",0.01,True,"0.01,1",real
+"s4",0.01,False,"0.01,1",real
 "s5",0.0056,True,"0.01,1",real
 "Km1",1,False,"0.01,1",real
 "Km2",1,False,"0.01,1",real
