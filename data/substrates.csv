@@ -14,7 +14,7 @@ identifier,iv,type,k,r,mv,trs,other
 "HDACi",0.0,"stimulus",,,1.0,"300,420",
 "Phagocytosis",0.0,"non-stimulus","k7","r7",,,
 "LY294-002",0.0,"stimulus",,,1.0,"295,420",
-"ATP",0.0,"stimulus",,"r10",0.0,,
+"ATP",0.0,"stimulus",,"r10",1.0,"200,380",
 "P2Y12act",1.0,"non-stimulus","k8","r8",,,"P2Y12s"
 "P2Y12s",1.0,"non-stimulus","r8","k8",,,"P2Y12act"
 "Gio",1.0,"non-stimulus","k9","r9",,,
