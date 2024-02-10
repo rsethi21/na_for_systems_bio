@@ -1,4 +1,12 @@
 nohup: ignoring input
+/home/rsethi/projects/rsh/PKH/network_analysis/na_for_systems_bio/model_fitting_and_evaluation.py:1: DeprecationWarning: 
+Pyarrow will become a required dependency of pandas in the next major release of pandas (pandas 3.0),
+(to allow more performant data types, such as the Arrow string type, and better interoperability with other libraries)
+but was not found to be installed on your system.
+If this would cause problems for you,
+please provide us feedback at https://github.com/pandas-dev/pandas/issues/54466
+        
+  import pandas as pd
 LPS = 0
 HDACi = 0
 LY294-002 = 0
@@ -21,12 +29,25 @@ d[Gio]/dt = k9[P2Y12act] - r9[Gio][Gio]
 
 Randomly Generated Error
 Figure saved: output/figure_0.png
-0.15494419142073806
+326.0397048382896
 BV2 --> Primary
-0.14169652231941188
-Traceback (most recent call last):
-  File "model_fitting_and_evaluation.py", line 57, in <module>
-    plt.figure(original_fig)
-  File "/home/rsethi1/venv/lib64/python3.6/site-packages/matplotlib/pyplot.py", line 668, in figure
-    num = int(num)  # crude validation of num argument
-TypeError: int() argument must be a string, a bytes-like object or a number, not 'Figure'
+2.273054995252919
+
+LPS, HDACi, LY294-002 Error
+Figure saved: output/figure_3.png
+0.057090269625501934
+BV2 --> Primary
+0.007367433412821867
+
+LPS and HDACi Error
+Figure saved: output/figure_2.png
+0.15281990675696064
+BV2 --> Primary
+2.630086831641765
+
+LPS Error
+Figure saved: output/figure_1.png
+0.3138883439101864
+BV2 --> Primary
+0.20624148996748287
+
