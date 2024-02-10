@@ -74,7 +74,6 @@ if __name__ == "__main__":
     conditions = list(product(ranges, ranges, ranges, ranges))
     external = ["LPS", "HDACi", "ATP", "LY294-002"]
     data = []
-    pdb.set_trace()
     for i_c, c in tqdm(enumerate(conditions), desc="Different Ranges", total=len(conditions)):
         for i, e in enumerate(external):
             if c[i] is not None:
