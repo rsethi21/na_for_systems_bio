@@ -72,7 +72,7 @@ if __name__ == "__main__":
     # set appropriate conditions
     ranges = [[60, 120], [120, 180], [180, 240], [90, 210], [60, 240], None]
     conditions = list(product(ranges, ranges, ranges))
-    external = ["LPS", "HDACi", "LY294-002"]
+    external = ["LPS", "HDACi", "ATP", "LY294-002"]
     data = []
     for i_c, c in tqdm(enumerate(conditions), desc="Different Ranges", total=len(conditions)):
         for i, e in enumerate(external):
@@ -94,8 +94,8 @@ if __name__ == "__main__":
         random_inputs = 10**np.random.normal(0, 0.33, size=(args.number, 3))
         # generate samples
         labels = ["LPS", "HDACi", "LY294-002"]
-        subs = ["AKT", "pAKT", "PI3K", "GSK3B", "pGSK3B", "PTEN", "pPTEN", "PIP2", "PIP3", "Phagocytosis"]
-        subs2 = ["AKT_2", "pAKT_2", "PI3K_2", "GSK3B_2", "pGSK3B_2", "PTEN_2", "pPTEN_2", "PIP2_2", "PIP3_2", "Phagocytosis_2"]
+        subs = ["AKT", "pAKT", "PI3Ks", "PI3K", "GSK3B", "pGSK3B", "PTEN", "pPTEN", "PIP2", "PIP3", "P2Y12act", "P2Y12s", "Gio", "Phagocytosis"]
+        subs2 = ["AKT_2", "pAKT_2", "PI3Ks_2", "PI3K_2", "GSK3B_2", "pGSK3B_2", "PTEN_2", "pPTEN_2", "PIP2_2", "PIP3_2", "P2Y12act_2", "P2Y12s_2", "Gio_2", "Phagocytosis_2"]
         cols = subs.copy()
         cols.extend(subs2)
         with cf.ProcessPoolExecutor(max_workers=args.multiprocess) as executor:
