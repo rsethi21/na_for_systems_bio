@@ -48,7 +48,7 @@ if __name__ == "__main__":
     network = Network("example", rates, interactions, substrates)
 
     # visualize network ordinary differential equations
-    time = np.array([i for i in range(500)])
+    time = np.array([i for i in range(501)])
     derivatives = network.get_representation_dydt()
 
     # load in pretrained parameters if any
@@ -71,12 +71,12 @@ if __name__ == "__main__":
     
     # set appropriate conditions
     ranges = [[60, 120], [120, 180], [180, 240], [90, 210], [60, 240], None]
-    conditions = list(product(ranges, ranges, ranges))
+    conditions = list(product(ranges, ranges, ranges, ranges))
     external = ["LPS", "HDACi", "ATP", "LY294-002"]
     data = []
     for i_c, c in tqdm(enumerate(conditions), desc="Different Ranges", total=len(conditions)):
         for i, e in enumerate(external):
-            if c[i] is not None:
+            if c[i_c] is not None:
                 network.substrates[e].time_ranges = [c[i]]
             else:
                 network.substrates[e].time_ranges = c[i]
