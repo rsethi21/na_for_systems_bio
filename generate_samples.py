@@ -72,7 +72,6 @@ if __name__ == "__main__":
     # set appropriate conditions
     ranges = [[60, 120], [120, 180], [90, 210], [60, 240], None]
     conditions = list(product(ranges, ranges, ranges))
-    pdb.set_trace()
     external = ["LPS", "ATP", "LY294-002"]
     data = []
     for i_c, c in tqdm(enumerate(conditions), desc="Different Ranges", total=len(conditions)):

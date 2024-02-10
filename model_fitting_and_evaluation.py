@@ -119,7 +119,7 @@ if __name__ == "__main__":
     mean_lps_y, l_f = network.graph_distributions(time, args.number, substrates_to_plot=["PI3K", "pAKT", "pPTEN", "Phagocytosis", "LPS", "HDACi", "GSK3B", "LY294-002"], normalize=True, path=os.path.join(args.output, "figure_1.png"), output_figure = True)
     print(error(mean_lps_y, lps, list(network.substrates.keys())))
     print("BV2 --> Primary")
-    print(error(mean_lps_y, {"Phagocytosis": {420: 0.5}}, list(network.substrates.keys())))
+    print(error(mean_lps_y, {"Phagocytosis": {240: 0.5}}, list(network.substrates.keys())))
     plt.figure(l_f)
     plt.plot(420, 0.5, "ko")
     l_f.savefig(os.path.join(args.output, "figure_1.png"))
