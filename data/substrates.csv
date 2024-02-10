@@ -11,7 +11,7 @@ identifier,iv,type,k,r,mv,trs,other
 "pGSK3B",1.0,"non-stimulus","r5","k5",,,"GSK3B"
 "TNFa",0.0,"non-stimulus","k6","r6",,,
 "LPS",0.0,"stimulus",,,1.0,"60,240",
-"HDACi",0.0,"stimulus",,,1.0,"300,420",
+"HDACi",0.0,"stimulus",,,0.0,,
 "Phagocytosis",0.0,"non-stimulus","k7","r7",,,
 "LY294-002",0.0,"stimulus",,,1.0,"295,420",
 "ATP",0.0,"stimulus",,"r10",1.0,"200,380",
