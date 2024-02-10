@@ -70,7 +70,7 @@ if __name__ == "__main__":
         y0s.append(y0)
     
     # set appropriate conditions
-    ranges = [[60, 120], [120, 180], [180, 240], [90, 210], [60, 240], None]
+    ranges = [[60, 120], [180, 240], [90, 210], [60, 240], None]
     conditions = list(product(ranges, ranges, ranges, ranges))
     external = ["LPS", "HDACi", "ATP", "LY294-002"]
     data = []
