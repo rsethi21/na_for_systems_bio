@@ -74,9 +74,10 @@ if __name__ == "__main__":
     conditions = list(product(ranges, ranges, ranges, ranges))
     external = ["LPS", "HDACi", "ATP", "LY294-002"]
     data = []
+    pdb.set_trace()
     for i_c, c in tqdm(enumerate(conditions), desc="Different Ranges", total=len(conditions)):
         for i, e in enumerate(external):
-            if c[i_c] is not None:
+            if c[i] is not None:
                 network.substrates[e].time_ranges = [c[i]]
             else:
                 network.substrates[e].time_ranges = c[i]
@@ -91,9 +92,9 @@ if __name__ == "__main__":
         else:
             measure_times = [240, 420]
         # random external stimuli
-        random_inputs = 10**np.random.normal(0, 0.33, size=(args.number, 3))
+        random_inputs = 10**np.random.normal(0, 0.33, size=(args.number, 4))
         # generate samples
-        labels = ["LPS", "HDACi", "LY294-002"]
+        labels = ["LPS", "HDACi", "ATP", "LY294-002"]
         subs = ["AKT", "pAKT", "PI3Ks", "PI3K", "GSK3B", "pGSK3B", "PTEN", "pPTEN", "PIP2", "PIP3", "P2Y12act", "P2Y12s", "Gio", "Phagocytosis"]
         subs2 = ["AKT_2", "pAKT_2", "PI3Ks_2", "PI3K_2", "GSK3B_2", "pGSK3B_2", "PTEN_2", "pPTEN_2", "PIP2_2", "PIP3_2", "P2Y12act_2", "P2Y12s_2", "Gio_2", "Phagocytosis_2"]
         cols = subs.copy()
