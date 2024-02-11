@@ -47,4 +47,4 @@ if __name__ == "__main__":
         network.set_parameters(list(parameters.values()), list(parameters.keys()))
 
     # check post-training training error
-    mean_y, f = network.graph_distributions(time, args.number, substrates_to_plot=["PI3K", "pAKT", "pPTEN", "Phagocytosis", "LPS", "HDACi", "LY294-002", "ATP"], normalize=True, path=os.path.join(args.output, "figure_atp.png"), output_figure=True)
+    mean_y, f = network.graph_distributions(time, args.number, substrates_to_plot=["PI3K", "pAKT", "pPTEN", "Phagocytosis", "LPS", "HDACi", "LY294-002", "ATP"], normalize=True, path=os.path.join(args.output, "figure_stronger_atp.png"), output_figure=True)
