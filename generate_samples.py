@@ -59,7 +59,7 @@ if __name__ == "__main__":
 
     # random initial states
     y0s = []
-    samples = 50
+    samples = 10
     for _ in range(samples):
         y0 = []
         for i, s in enumerate(network.substrates.values()):
@@ -72,7 +72,7 @@ if __name__ == "__main__":
     # set appropriate conditions
     ranges = [[60, 120], [120, 180], [90, 210], [60, 240], None]
     conditions = list(product(ranges, ranges, ranges))
-    external = ["LPS", "ATP", "LY294-002"]
+    external = ["LPS", "ATP", "LY294-002", "HDACi"]
     data = []
     for i_c, c in tqdm(enumerate(conditions), desc="Different Ranges", total=len(conditions)):
         for i, e in enumerate(external):
@@ -91,9 +91,9 @@ if __name__ == "__main__":
         else:
             measure_times = [240, 300, 420]
         # random external stimuli
-        random_inputs = 10**np.random.normal(0, 0.33, size=(args.number, 3))
+        random_inputs = 10**np.random.normal(0, 0.33, size=(args.number, 4))
         # generate samples
-        labels = ["LPS", "ATP", "LY294-002"]
+        labels = ["LPS", "ATP", "LY294-002", "HDACi"]
         subs = ["AKT", "pAKT", "PI3Ks", "PI3K", "GSK3B", "pGSK3B", "PTEN", "pPTEN", "PIP2", "PIP3", "P2Y12act", "P2Y12s", "Gio", "Phagocytosis"]
         subs2 = ["AKT_1hr", "pAKT_1hr", "PI3Ks_1hr", "PI3K_1hr", "GSK3B_1hr", "pGSK3B_1hr", "PTEN_1hr", "pPTEN_1hr", "PIP2_1hr", "PIP3_1hr", "P2Y12act_1hr", "P2Y12s_1hr", "Gio_1hr", "Phagocytosis_1hr"]
         subs3 = ["AKT_3hr", "pAKT_3hr", "PI3Ks_3hr", "PI3K_3hr", "GSK3B_3hr", "pGSK3B_3hr", "PTEN_3hr", "pPTEN_3hr", "PIP2_3hr", "PIP3_3hr", "P2Y12act_3hr", "P2Y12s_3hr", "Gio_3hr", "Phagocytosis_3hr"]
