@@ -27,7 +27,11 @@ parser.add_argument("-m", "--multiprocess", help="number of threads", required=F
 
 def generate_output(random_input, labels, y0s, time, network, time_to_extract = 0, substrates_to_track=["Phagocytosis"]):
     for i, l in zip(random_input, labels):
-        network.substrates[l].max_value = i
+        if network.substrates[l].time_ranges != None:
+            network.substrates[l].max_value = i
+        else:
+            network.substrates[l].max_value = 0.0
+
     mean_y = network.graph_distributions(time, None, normalize=True, path=None, initials=y0s, verbose=False)
     indices_to_extract = [list(network.substrates.keys()).index(s) for s in substrates_to_track]
     output = []
@@ -72,6 +76,7 @@ if __name__ == "__main__":
     # set appropriate conditions
     ranges = [[60, 120], [120, 180], [90, 210], [60, 240], None]
     conditions = list(product(ranges, ranges, ranges, ranges))
+    pdb.set_trace()
     external = ["LPS", "ATP", "LY294-002", "HDACi"]
     data = []
     for i_c, c in tqdm(enumerate(conditions), desc="Different Ranges", total=len(conditions)):
@@ -97,6 +102,9 @@ if __name__ == "__main__":
         subs = ["AKT", "pAKT", "PI3Ks", "PI3K", "GSK3B", "pGSK3B", "PTEN", "pPTEN", "PIP2", "PIP3", "P2Y12act", "P2Y12s", "Gio", "Phagocytosis"]
         subs2 = ["AKT_1hr", "pAKT_1hr", "PI3Ks_1hr", "PI3K_1hr", "GSK3B_1hr", "pGSK3B_1hr", "PTEN_1hr", "pPTEN_1hr", "PIP2_1hr", "PIP3_1hr", "P2Y12act_1hr", "P2Y12s_1hr", "Gio_1hr", "Phagocytosis_1hr"]
         subs3 = ["AKT_3hr", "pAKT_3hr", "PI3Ks_3hr", "PI3K_3hr", "GSK3B_3hr", "pGSK3B_3hr", "PTEN_3hr", "pPTEN_3hr", "PIP2_3hr", "PIP3_3hr", "P2Y12act_3hr", "P2Y12s_3hr", "Gio_3hr", "Phagocytosis_3hr"]
+        for i, l in enumerate(labels):
+            if network.substrates[l].time_ranges == None:
+                random_inputs[:,i] = np.array([0.0 for _ in list(range(int(args.number)))])
 
         cols = subs.copy()
         cols.extend(subs2)
