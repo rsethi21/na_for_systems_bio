@@ -20,7 +20,7 @@ identifier,value,fixed,bounds,bounds_type
 "r10",0.1,True,"0.01,1",real
 "s1",1,False,"0.01,1",real
 "s2",1,False,"0.01,1",real
-"s3",1,True,"0.01,1",real
+"s3",1.0,True,"0.01,1",real
 "s4",0.01,False,"0.01,1",real
 "s5",16.8,True,"0.01,1",real
 "Km1",1,False,"0.01,1",real
