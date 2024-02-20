@@ -253,7 +253,7 @@ class Network:
         else:
             return y
 
-    def graph_distributions(self, time, samples, normalize=False, substrates_to_plot=[], path="./figure_with_area.png", output_figure=False, initials=None, verbose=True):
+    def graph_distributions(self, time, samples, normalize=False, substrates_to_plot=[], path="./figure_with_area.png", output_figure=False, initials=None, verbose=True, axis=None):
         if initials == None:
             y0s = []
             for _ in tqdm(range(samples),desc="Generating Random Initial",total=samples, disable=~verbose):
@@ -273,20 +273,26 @@ class Network:
         min_y = np.mean(ys, axis=0) - np.std(ys, axis=0)*2
         max_y = np.mean(ys, axis=0) + np.std(ys, axis=0)*2
         mean_y = np.mean(ys, axis=0)
-        temp_fig = plt.figure()
-        if path != None:
-            for i, s in tqdm(enumerate(self.substrates.values()), desc="Plotting Each Substrates", total=len(self.substrates), disable=~verbose):
-                if s.identifier in substrates_to_plot:
-                    if s.type != "stimulus":
-                        plt.fill_between(time, min_y[:,i], max_y[:,i], color=self.colors[i], alpha=0.2)
-                    plt.plot(time, mean_y[:,i], color=self.colors[i],label=s.__getattribute__("identifier"),linewidth=1.0)
-            plt.xlabel("Time (mins)")
-            plt.ylabel("Concentration (AU)")
-            plt.legend(loc="upper right", fontsize=5)
-            temp_fig.savefig(path)
-            print(f"Figure saved: {path}")
-        plt.close(temp_fig)
-        if output_figure:
+        if path != None or axis != None:
+            if axis == None:
+                temp_fig = plt.figure()
+                for i, s in tqdm(enumerate(self.substrates.values()), desc="Plotting Each Substrates", total=len(self.substrates), disable=~verbose):
+                    if s.identifier in substrates_to_plot:
+                        if s.type != "stimulus":
+                            plt.fill_between(time, min_y[:,i], max_y[:,i], color=self.colors[i], alpha=0.2)
+                        plt.plot(time, mean_y[:,i], color=self.colors[i],label=s.__getattribute__("identifier"),linewidth=1.0)
+                plt.xlabel("Time (mins)")
+                plt.ylabel("Concentration (AU)")
+                plt.legend(loc="upper right", fontsize=5)
+                temp_fig.savefig(path)
+                plt.close(temp_fig)
+            else:
+                for i, s in tqdm(enumerate(self.substrates.values()), desc="Plotting Each Substrates", total=len(self.substrates), disable=~verbose):
+                    if s.identifier in substrates_to_plot:
+                        if s.type != "stimulus":
+                            axis.fill_between(time, min_y[:,i], max_y[:,i], color=self.colors[i], alpha=0.2)
+                        axis.plot(time, mean_y[:,i], color=self.colors[i],label=s.__getattribute__("identifier"),linewidth=1.0)
+        if output_figure and axis==None:
             return mean_y, temp_fig
         else:
             return mean_y

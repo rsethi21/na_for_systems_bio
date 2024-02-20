@@ -28,6 +28,8 @@ parser.add_argument("-t", "--toplot", help="list of substrates to plot", nargs="
 if __name__ == "__main__":
     args = parser.parse_args()
    
+    main_figure, axs = plt.subplots(1, 4, figsize=(24, 9), sharex=True, sharey=True)
+
     # parse and create all necessary objects for creating a network
     rates = parse_rates(args.rates)
     substrates = parse_substrates(args.substrates, rates)
@@ -50,7 +52,7 @@ if __name__ == "__main__":
     # check unfitted rates error
     print("Randomly Generated Error")
     network.set_parameters(np.random.rand(len([p for p in network.parameters.values() if p.fixed==False])), [p.identifier for p in network.parameters.values() if p.fixed==False])
-    original, original_fig = network.graph_distributions(time, args.number, substrates_to_plot=["PI3K", "pAKT", "pPTEN", "Phagocytosis", "LPS", "HDACi", "GSK3B", "LY294-002"], normalize=True, path=os.path.join(args.output, "figure_0.png"), output_figure=True)
+    original, original_fig = network.graph_distributions(time, args.number, substrates_to_plot=["PI3K", "pAKT", "pPTEN", "Phagocytosis", "LPS", "HDACi", "GSK3B", "LY294-002"], normalize=True, path=os.path.join(args.output, "figure_0.png"), output_figure=True, axis=None)
     print(error(original, fit_dictionary, list(network.substrates.keys())))
     print("BV2 --> Primary")
     print(error(original, {"Phagocytosis": {420: 0.6}}, list(network.substrates.keys())))
@@ -78,14 +80,14 @@ if __name__ == "__main__":
     
     # check post-training training error
     print("LPS, HDACi, LY294-002 Error")
-    mean_y, f = network.graph_distributions(time, args.number, substrates_to_plot=["PI3K", "pAKT", "pPTEN", "Phagocytosis", "LPS", "HDACi", "GSK3B", "LY294-002"], normalize=True, path=os.path.join(args.output, "figure_3.png"), output_figure=True)
+    mean_y = network.graph_distributions(time, args.number, substrates_to_plot=["PI3K", "pAKT", "pPTEN", "Phagocytosis", "LPS", "HDACi", "GSK3B", "LY294-002"], normalize=True, path=os.path.join(args.output, "figure_3.png"), output_figure=True, axis=axs[0])
     print(error(mean_y, fit_dictionary, list(network.substrates.keys())))
     print("BV2 --> Primary")
     print(error(mean_y, {"Phagocytosis": {420: 0.6}}, list(network.substrates.keys())))
-    plt.figure(f)
-    plt.plot(420, 0.6, "ko")
-    f.savefig(os.path.join(args.output, "figure_3.png"))
-    plt.close(f)
+    # plt.figure(f)
+    # plt.plot(420, 0.6, "ko")
+    # f.savefig(os.path.join(args.output, "figure_3.png"))
+    # plt.close(f)
     print()
 
     # check post-training validation error
@@ -97,14 +99,15 @@ if __name__ == "__main__":
         "PIP3": {"410": 0.8, "420": 0.8,},
         "GSK3B": {"410": 1.1, "420": 1.1,}
         }
-    mean_lps_hdaci_y, lh_fig = network.graph_distributions(time, args.number, substrates_to_plot=["PI3K", "pAKT", "pPTEN", "Phagocytosis", "LPS", "HDACi", "GSK3B", "LY294-002"], normalize=True, path=os.path.join(args.output, "figure_2.png"), output_figure=True)
+    mean_lps_hdaci_y = network.graph_distributions(time, args.number, substrates_to_plot=["PI3K", "pAKT", "pPTEN", "Phagocytosis", "LPS", "HDACi", "GSK3B", "LY294-002"], normalize=True, path=os.path.join(args.output, "figure_2.png"), output_figure=True, axis=axs[1])
     print(error(mean_lps_hdaci_y, lps_hdaci, list(network.substrates.keys())))
     print("BV2 --> Primary")
     print(error(mean_lps_hdaci_y, {"Phagocytosis": {420: 2.7}}, list(network.substrates.keys())))
-    plt.figure(lh_fig)
-    plt.plot(420, 2.7, "ko")
-    lh_fig.savefig(os.path.join(args.output, "figure_2.png"))
-    plt.close(lh_fig)
+    # plt.figure(lh_fig)
+    # plt.plot(420, 2.7, "ko")
+    # axs[1].set_figure(lh_fig)
+    # lh_fig.savefig(os.path.join(args.output, "figure_2.png"))
+    # plt.close(lh_fig)
     print()
 
     print("LPS Error")
@@ -116,12 +119,27 @@ if __name__ == "__main__":
         "GSK3B": {"410": 0.7, "420": 0.7,},
         "Phagocytosis": {"360": 0.80413556, "420": 1.04238109}
         }
-    mean_lps_y, l_f = network.graph_distributions(time, args.number, substrates_to_plot=["PI3K", "pAKT", "pPTEN", "Phagocytosis", "LPS", "HDACi", "GSK3B", "LY294-002"], normalize=True, path=os.path.join(args.output, "figure_1.png"), output_figure = True)
+    mean_lps_y = network.graph_distributions(time, args.number, substrates_to_plot=["PI3K", "pAKT", "pPTEN", "Phagocytosis", "LPS", "HDACi", "GSK3B", "LY294-002", "ATP"], normalize=True, path=os.path.join(args.output, "figure_1.png"), output_figure = True, axis=axs[3])
     print(error(mean_lps_y, lps, list(network.substrates.keys())))
     print("BV2 --> Primary")
     print(error(mean_lps_y, {"Phagocytosis": {240: 0.5}}, list(network.substrates.keys())))
-    plt.figure(l_f)
-    plt.plot(420, 0.5, "ko")
-    l_f.savefig(os.path.join(args.output, "figure_1.png"))
-    plt.close(l_f)
+    # plt.figure(l_f)
+    # plt.plot(420, 0.5, "ko")
+    # axs[2].set_figure(l_f)
+    # l_f.savefig(os.path.join(args.output, "figure_1.png"))
+    # plt.close(l_f)
     print()
+
+    network.substrates["ATP"].time_ranges = [[300, 420]]
+    network.substrates["ATP"].max_value = 2.0
+    mean_atp_y = network.graph_distributions(time, args.number, substrates_to_plot=["PI3K", "pAKT", "pPTEN", "Phagocytosis", "LPS", "HDACi", "GSK3B", "LY294-002", "ATP"], normalize=True, path=os.path.join(args.output, "figure_11.png"), output_figure = True, axis=axs[2])
+
+    axs[0].set_title("LPS,HDACi,LY294-002")
+    axs[1].set_title("LPS,HDACi")
+    axs[3].set_title("LPS")
+    axs[2].set_title("LPS,ATP")
+    axs[1].set_xlabel("Time")
+    axs[2].set_xlabel("(mins)")
+    axs[0].set_ylabel("Concentration (AU)")
+    axs[3].legend(loc="upper right", fontsize=8)
+    main_figure.savefig(os.path.join(args.output, "birdseye.png"))

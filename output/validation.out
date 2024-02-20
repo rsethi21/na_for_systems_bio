@@ -29,25 +29,20 @@ d[Gio]/dt = k9[P2Y12act] - r9[Gio][Gio]
 
 Randomly Generated Error
 Figure saved: output/figure_0.png
-319.4584748173307
+271.3697846489596
 BV2 --> Primary
-2.321925699821118
+2.0717432738137656
 
 LPS, HDACi, LY294-002 Error
 Figure saved: output/figure_3.png
-0.07793161197904604
+0.0776980958034213
 BV2 --> Primary
-0.0449293464120122
-
-LPS and HDACi Error
-Figure saved: output/figure_2.png
-0.15177383743309822
-BV2 --> Primary
-2.577063871041807
-
-LPS Error
-Figure saved: output/figure_1.png
-0.3130834326799257
-BV2 --> Primary
-0.20640106153946797
-
+0.046900657639800475
+Traceback (most recent call last):
+  File "/home/rsethi/projects/rsh/PKH/network_analysis/na_for_systems_bio/model_fitting_and_evaluation.py", line 89, in <module>
+    axs[0].set_figure(f)
+  File "/home/rsethi/projects/rsh/PKH/network_analysis/venv/lib/python3.10/site-packages/matplotlib/axes/_base.py", line 821, in set_figure
+    super().set_figure(fig)
+  File "/home/rsethi/projects/rsh/PKH/network_analysis/venv/lib/python3.10/site-packages/matplotlib/artist.py", line 747, in set_figure
+    raise RuntimeError("Can not put single artist in "
+RuntimeError: Can not put single artist in more than one figure
