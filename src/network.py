@@ -1,7 +1,7 @@
 from scipy.integrate import odeint
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
-from geneticalgorithm2 import geneticalgorithm2 as ga
+# from geneticalgorithm2 import geneticalgorithm2 as ga
 import numpy as np
 from tqdm import tqdm
 import pdb
@@ -296,7 +296,7 @@ class Network:
             return mean_y, temp_fig
         else:
             return mean_y
-
+    '''
     def fit(self, data, time, arguments, number=1, normalize=False, obj_calc=None, mlp=1):
         bounds, bound_types, names = self.get_bounds_information()
         substrate_names = list(self.substrates.keys())
@@ -321,7 +321,6 @@ class Network:
                     else:
                         cost += obj_calc(prediction, truth)
             return cost
-
         fitting_model = ga(function = loss,
                            dimension = len(bounds),
                            variable_type = bound_types,
@@ -332,4 +331,4 @@ class Network:
         fitting_model.run(set_function=ga.set_function_multiprocess(loss, n_jobs=mlp))
         self.set_parameters(fitting_model.result.variable, names)
         return names, fitting_model.result.variable
-
+    '''
