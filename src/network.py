@@ -1,7 +1,7 @@
 from scipy.integrate import odeint
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
-# from geneticalgorithm2 import geneticalgorithm2 as ga
+from geneticalgorithm2 import geneticalgorithm2 as ga
 import numpy as np
 from tqdm import tqdm
 import pdb
@@ -247,10 +247,10 @@ class Network:
             plt.ylabel("Concentration (AU)",fontsize=12)
             plt.legend(loc="upper right", fontsize=5)
             fig.savefig(path)
-        plt.close(fig)
         if output_figure:
             return y, fig
         else:
+            plt.close(fig)
             return y
 
     def graph_distributions(self, time, samples, normalize=False, substrates_to_plot=[], path="./figure_with_area.png", output_figure=False, initials=None, verbose=True, axis=None):
@@ -296,7 +296,6 @@ class Network:
             return mean_y, temp_fig
         else:
             return mean_y
-    '''
     def fit(self, data, time, arguments, number=1, normalize=False, obj_calc=None, mlp=1):
         bounds, bound_types, names = self.get_bounds_information()
         substrate_names = list(self.substrates.keys())
@@ -331,4 +330,3 @@ class Network:
         fitting_model.run(set_function=ga.set_function_multiprocess(loss, n_jobs=mlp))
         self.set_parameters(fitting_model.result.variable, names)
         return names, fitting_model.result.variable
-    '''

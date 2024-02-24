@@ -28,8 +28,6 @@ parser.add_argument("-t", "--toplot", help="list of substrates to plot", nargs="
 if __name__ == "__main__":
     args = parser.parse_args()
    
-    main_figure, axs = plt.subplots(1, 4, figsize=(24, 9), sharex=True, sharey=True)
-
     # parse and create all necessary objects for creating a network
     rates = parse_rates(args.rates)
     substrates = parse_substrates(args.substrates, rates)
@@ -37,7 +35,6 @@ if __name__ == "__main__":
     
     # create a new instance of a network
     network = Network("example", rates, interactions, substrates)
-    
     # visualize network ordinary differential equations
     time = np.array([i for i in range(500)])
     derivatives = network.get_representation_dydt()
@@ -49,19 +46,18 @@ if __name__ == "__main__":
     with open(args.fitting, "r") as file:
         fit_dictionary = json.load(file)
 
+    '''
     # check unfitted rates error
     print("Randomly Generated Error")
     network.set_parameters(np.random.rand(len([p for p in network.parameters.values() if p.fixed==False])), [p.identifier for p in network.parameters.values() if p.fixed==False])
-    original, original_fig = network.graph_distributions(time, args.number, substrates_to_plot=["PI3K", "pAKT", "pPTEN", "Phagocytosis", "LPS", "HDACi", "GSK3B", "LY294-002"], normalize=True, path=os.path.join(args.output, "figure_0.png"), output_figure=True, axis=None)
+    original, original_fig = network.graph_distributions(time, args.number, substrates_to_plot=["PI3K", "pAKT", "pPTEN", "Phagocytosis", "TNFa", "LPS", "HDACi", "GSK3B", "LY294-002"], normalize=True, path=os.path.join(args.output, "figure_0.png"), output_figure=True, axis=None)
     print(error(original, fit_dictionary, list(network.substrates.keys())))
-    print("BV2 --> Primary")
-    print(error(original, {"Phagocytosis": {420: 0.6}}, list(network.substrates.keys())))
     plt.figure(original_fig)
-    plt.plot(420, 0.6, "ko")
+    plt.plot(420, 3.17, "ko")
     original_fig.savefig(os.path.join(args.output, "figure_0.png"))
-    plt.close(original_fig)
+    # plt.close(original_fig)
     print()
-
+    '''
     # load in pretrained parameters if any
     if args.parameters != None:
         with open(args.parameters, "r") as fitted_params:
@@ -74,16 +70,21 @@ if __name__ == "__main__":
             fit_dictionary = json.load(file)
         with open(args.arguments, "r") as argument_file:
             argues = json.load(argument_file)
+        print("Training...")
         network.fit(fit_dictionary, time, argues, number=10, normalize=True, mlp=args.multi)
+        print("Saving learned parameters...")
         with open(os.path.join(args.output, "fitted_params_tnfa.json"), "w") as out_file:
             json.dump({i: r.value for i, r in network.parameters.items()}, out_file)
     
     # check post-training training error
     print("TNF-alpha Error")
-    mean_y = network.graph_distributions(time, args.number, substrates_to_plot=["PI3K", "pAKT", "pPTEN", "Phagocytosis", "LPS", "HDACi", "GSK3B", "LY294-002"], normalize=True, path=os.path.join(args.output, "figure_3.png"), output_figure=True, axis=axs[0])
+    mean_y, f = network.graph_distributions(time, args.number, substrates_to_plot=["PI3K", "pAKT", "pPTEN", "Phagocytosis", "TNFa", "LPS", "HDACi", "GSK3B", "LY294-002"], normalize=True, path=os.path.join(args.output, "figure_3.png"), output_figure=True)
+    plt.figure(f)
+    plt.plot(420, 3.17, "ko")
+    f.savefig(os.path.join(args.output, "figure_3.png"))
     print(error(mean_y, fit_dictionary, list(network.substrates.keys())))
     # plt.figure(f)
     # plt.plot(420, 0.6, "ko")
     # f.savefig(os.path.join(args.output, "figure_3.png"))
-    # plt.close(f)
+    plt.close(f)
     print()
