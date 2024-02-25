@@ -48,18 +48,6 @@ if __name__ == "__main__":
     with open(args.fitting, "r") as file:
         fit_dictionary = json.load(file)
 
-    '''
-    # check unfitted rates error
-    print("Randomly Generated Error")
-    network.set_parameters(np.random.rand(len([p for p in network.parameters.values() if p.fixed==False])), [p.identifier for p in network.parameters.values() if p.fixed==False])
-    original, original_fig = network.graph_distributions(time, args.number, substrates_to_plot=["PI3K", "pAKT", "pPTEN", "Phagocytosis", "TNFa", "LPS", "HDACi", "GSK3B", "LY294-002"], normalize=True, path=os.path.join(args.output, "figure_0.png"), output_figure=True, axis=None)
-    print(error(original, fit_dictionary, list(network.substrates.keys())))
-    plt.figure(original_fig)
-    plt.plot(420, 3.17, "ko")
-    original_fig.savefig(os.path.join(args.output, "figure_0.png"))
-    # plt.close(original_fig)
-    print()
-    '''
     # load in pretrained parameters if any
     if args.parameters != None:
         with open(args.parameters, "r") as fitted_params:
@@ -80,11 +68,11 @@ if __name__ == "__main__":
     
     # check post-training training error
     print("LPS, HDACi, LY294-002 Error")
-    mean_y3, min_y3, max_y3, f3 = network.graph_distributions(time, args.number, substrates_to_plot=["PI3K", "pAKT", "pPTEN", "Phagocytosis", "LPS", "HDACi", "GSK3B", "LY294-002"], normalize=True, path=os.path.join(args.output, "figure_3.png"), output_figure=True, return_min_max=True)
+    mean_y3, min_y3, max_y3, f3 = network.graph_distributions(time, args.number, substrates_to_plot=["LPS", "HDACi", "LY294-002"], path=os.path.join(args.output, "figure_3.png"), output_figure=True, return_min_max=True)
     plt.figure(f3)
-    plt.plot(420, 3.176, "ko")
+    plt.plot(420, 0.938, "ko")
     # plt.fill_between(time, np.log10(min_y3[:,list(network.substrates.keys()).index("TNFa")]), np.log10(max_y3[:,list(network.substrates.keys()).index("TNFa")]), "b--", alpha=0.2)
-    plt.plot(time, np.log10(mean_y3[:,list(network.substrates.keys()).index("TNFa")]), "b-", label="TNFa", linewidth=1.0)
+    plt.plot(time, mean_y3[:,list(network.substrates.keys()).index("TNFa")], "b-", label="TNFa", linewidth=1.0)
     f3.savefig(os.path.join(args.output, "figure_3.png"))
     print(error(mean_y3, fit_dictionary, list(network.substrates.keys())))
     plt.legend()
@@ -94,13 +82,13 @@ if __name__ == "__main__":
     network.substrates["LY294-002"].time_ranges = None
     network.substrates["LY294-002"].max_value = 0.0
     print("LPS, HDACi Error")
-    mean_y2, min_y2, max_y2, f2 = network.graph_distributions(time, args.number, substrates_to_plot=["PI3K", "pAKT", "pPTEN", "Phagocytosis", "LPS", "HDACi", "GSK3B", "LY294-002"], normalize=True, path=os.path.join(args.output, "figure_2.png"), output_figure=True, return_min_max=True)
+    mean_y2, min_y2, max_y2, f2 = network.graph_distributions(time, args.number, substrates_to_plot=["LPS", "HDACi", "LY294-002"], path=os.path.join(args.output, "figure_2.png"), output_figure=True, return_min_max=True)
     plt.figure(f2)
-    plt.plot(420, 2.86, "ko")
+    plt.plot(420, 0.469, "ko")
     # plt.fill_between(time, np.log10(min_y2[:,list(network.substrates.keys()).index("TNFa")]), np.log10(max_y2[:,list(network.substrates.keys()).index("TNFa")]), "b--", alpha=0.2)
-    plt.plot(time, np.log10(mean_y2[:,list(network.substrates.keys()).index("TNFa")]), "b-", label="TNFa", linewidth=1.0)
+    plt.plot(time, mean_y2[:,list(network.substrates.keys()).index("TNFa")], "b-", label="TNFa", linewidth=1.0)
     f2.savefig(os.path.join(args.output, "figure_2.png"))
-    print(error(mean_y2, {"TNFa": {"0": 1.0, "30": 1.0, "410": 750, "420": 750}}, list(network.substrates.keys())))
+    print(error(mean_y2, {"TNFa": {"0": 0.0, "30": 0.0, "410": 0.469, "420": 0.469}}, list(network.substrates.keys())))
     plt.legend()
     plt.close(f2)
     print()
@@ -108,13 +96,13 @@ if __name__ == "__main__":
     network.substrates["HDACi"].time_ranges = None
     network.substrates["HDACi"].max_value = 0.0
     print("LPS Error")
-    mean_y, min_y, max_y, f = network.graph_distributions(time, args.number, substrates_to_plot=["PI3K", "pAKT", "pPTEN", "Phagocytosis", "LPS", "HDACi", "GSK3B", "LY294-002"], normalize=True, path=os.path.join(args.output, "figure.png"), output_figure=True, return_min_max=True)
+    mean_y, min_y, max_y, f = network.graph_distributions(time, args.number, substrates_to_plot=["LPS", "HDACi", "LY294-002"], path=os.path.join(args.output, "figure.png"), output_figure=True, return_min_max=True)
     plt.figure(f)
-    plt.plot(420, 3.20, "ko")
+    plt.plot(420, 1.0, "ko")
     # plt.fill_between(time, np.log10(min_y[:,list(network.substrates.keys()).index("TNFa")]), np.log10(max_y[:,list(network.substrates.keys()).index("TNFa")]), "b--", alpha=0.2)
-    plt.plot(time, np.log10(mean_y[:,list(network.substrates.keys()).index("TNFa")]), "b-", label="TNFa", linewidth=1.0)
+    plt.plot(time, mean_y[:,list(network.substrates.keys()).index("TNFa")], "b-", label="TNFa", linewidth=1.0)
     f.savefig(os.path.join(args.output, "figure.png"))
-    print(error(mean_y, {"TNFa": {"0": 1.0, "30": 1.0, "410": 1600, "420": 1600}}, list(network.substrates.keys())))
+    print(error(mean_y, {"TNFa": {"0": 1.0, "30": 1.0, "410": 1.0, "420": 1.0}}, list(network.substrates.keys())))
     plt.legend()
     plt.close(f)
     print()
