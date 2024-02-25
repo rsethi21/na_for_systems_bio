@@ -1,5 +1,5 @@
 {
-	"max_num_iteration": 2,
+	"max_num_iteration": 250,
 	"population_size":100,
         "mutation_probability":0.30,
         "elit_ratio": 0.01,

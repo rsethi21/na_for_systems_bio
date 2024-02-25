@@ -253,7 +253,7 @@ class Network:
             plt.close(fig)
             return y
 
-    def graph_distributions(self, time, samples, normalize=False, substrates_to_plot=[], path="./figure_with_area.png", output_figure=False, initials=None, verbose=True, axis=None):
+    def graph_distributions(self, time, samples, normalize=False, substrates_to_plot=[], path="./figure_with_area.png", output_figure=False, initials=None, verbose=True, axis=None, return_min_max=False):
         if initials == None:
             y0s = []
             for _ in tqdm(range(samples),desc="Generating Random Initial",total=samples, disable=~verbose):
@@ -292,8 +292,12 @@ class Network:
                         if s.type != "stimulus":
                             axis.fill_between(time, min_y[:,i], max_y[:,i], color=self.colors[i], alpha=0.2)
                         axis.plot(time, mean_y[:,i], color=self.colors[i],label=s.__getattribute__("identifier"),linewidth=1.0)
-        if output_figure and axis==None:
+        if output_figure and return_min_max and axis==None:
+            return mean_y, min_y, max_y, temp_fig
+        elif output_figure and axis==None:
             return mean_y, temp_fig
+        elif return_min_max:
+            return mean_y, min_y, max_y
         else:
             return mean_y
     def fit(self, data, time, arguments, number=1, normalize=False, obj_calc=None, mlp=1):
