@@ -78,7 +78,6 @@ if __name__ == "__main__":
     # set appropriate conditions
     ranges = [[60, 120], [120, 180], [90, 210], [60, 240], None]
     conditions = list(product(ranges, ranges, ranges, ranges))
-    pdb.set_trace()
     external = ["LPS", "ATP", "LY294-002", "HDACi"]
     data = []
     for i_c, c in tqdm(enumerate(conditions), desc="Different Ranges", total=len(conditions)):
@@ -94,9 +93,9 @@ if __name__ == "__main__":
             else:
                 possible.extend(p)
         if len(possible) != 0:
-            measure_times = [max(possible), max(possible) + 60, max(possible)+180]
+            measure_times = [max(possible), max(possible) + 60, max(possible) + 120, max(possible)+180]
         else:
-            measure_times = [240, 300, 420]
+            measure_times = [240, 300, 360, 420]
         # random external stimuli
         random_inputs = 10**np.random.normal(0, 0.33, size=(args.number, 4))
         # generate samples
@@ -104,12 +103,14 @@ if __name__ == "__main__":
         subs = ["AKT", "pAKT", "PI3Ks", "PI3K", "GSK3B", "pGSK3B", "PTEN", "pPTEN", "PIP2", "PIP3", "P2Y12act", "P2Y12s", "Gio", "Phagocytosis"]
         subs2 = ["AKT_1hr", "pAKT_1hr", "PI3Ks_1hr", "PI3K_1hr", "GSK3B_1hr", "pGSK3B_1hr", "PTEN_1hr", "pPTEN_1hr", "PIP2_1hr", "PIP3_1hr", "P2Y12act_1hr", "P2Y12s_1hr", "Gio_1hr", "Phagocytosis_1hr"]
         subs3 = ["AKT_3hr", "pAKT_3hr", "PI3Ks_3hr", "PI3K_3hr", "GSK3B_3hr", "pGSK3B_3hr", "PTEN_3hr", "pPTEN_3hr", "PIP2_3hr", "PIP3_3hr", "P2Y12act_3hr", "P2Y12s_3hr", "Gio_3hr", "Phagocytosis_3hr"]
+        subs4 = ["AKT_2hr", "pAKT_2hr", "PI3Ks_2hr", "PI3K_2hr", "GSK3B_2hr", "pGSK3B_2hr", "PTEN_2hr", "pPTEN_2hr", "PIP2_2hr", "PIP3_2hr", "P2Y12act_2hr", "P2Y12s_2hr", "Gio_2hr", "Phagocytosis_2hr"]
         for i, l in enumerate(labels):
             if network.substrates[l].time_ranges == None:
                 random_inputs[:,i] = np.array([0.0 for _ in list(range(int(args.number)))])
 
         cols = subs.copy()
         cols.extend(subs2)
+        cols.extend(subs4)
         cols.extend(subs3)
         with cf.ProcessPoolExecutor(max_workers=args.multiprocess) as executor:
             output = list(tqdm(executor.map(generate_output, random_inputs, repeat(labels), repeat(y0s), repeat(time), repeat(network), repeat(measure_times), repeat(subs)), total=len(random_inputs), desc=f"Generating Data with Range Pairs {c}"))
@@ -120,6 +121,7 @@ if __name__ == "__main__":
         output_df["measure_time1"] = [measure_times[0] for _ in range(len(random_inputs))]
         output_df["measure_time2"] = [measure_times[1] for _ in range(len(random_inputs))]
         output_df["measure_time3"] = [measure_times[2] for _ in range(len(random_inputs))]
+        output_df["measure_time4"] = [measure_times[3] for _ in range(len(random_inputs))]
 
         output_df[cols] = output
         data.append(output_df)
