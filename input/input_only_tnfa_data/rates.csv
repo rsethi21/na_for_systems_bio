@@ -4,7 +4,7 @@ identifier,value,fixed,bounds,bounds_type
 "k3",0.6203257016528185,True,"0.01,1",real
 "k4",0.02688314668847197,True,"0.01,1",real
 "k5",0.8056871022125585,True,"0.01,1",real
-"k6",1,False,"0.01,100",real
+"k6",1,False,"0.01,1",real
 "k7",0.651815876492315,True,"0.01,1",real
 "k8",0.336,True,"0.01,1",real
 "k9",6,True,"0.01,1",real
@@ -13,7 +13,7 @@ identifier,value,fixed,bounds,bounds_type
 "r3",0.07038233397158364,True,"0.01,1",real
 "r4",0.699788335233804,True,"0.01,1",real
 "r5",0.14941648404961172,True,"0.01,1",real
-"r6",1,False,"0.01,100",real
+"r6",1,False,"0.01,1",real
 "r7",0.2255344929138502,True,"0.01,1",real
 "r8",1.2,True,"0.01,1",real
 "r9",3,True,"0.01,1",real
