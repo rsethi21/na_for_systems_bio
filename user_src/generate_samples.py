@@ -37,9 +37,11 @@ def generate_output(random_input, labels, y0s, time, network, time_to_extract = 
     mean_y = network.graph_distributions(time, None, normalize=True, path=None, initials=y0s, verbose=False)
     indices_to_extract = [list(network.substrates.keys()).index(s) for s in substrates_to_track]
     output = []
+    max_values = np.max(mean_y[:,indices_to_extract], axis=0)
     for t in time_to_extract:
         response = list(mean_y[t, indices_to_extract])
         output.extend(response)
+    output.extend(max_values)
     return output
 
 if __name__ == "__main__":
@@ -104,6 +106,7 @@ if __name__ == "__main__":
         subs2 = ["AKT_1hr", "pAKT_1hr", "PI3Ks_1hr", "PI3K_1hr", "GSK3B_1hr", "pGSK3B_1hr", "PTEN_1hr", "pPTEN_1hr", "PIP2_1hr", "PIP3_1hr", "P2Y12act_1hr", "P2Y12s_1hr", "Gio_1hr", "Phagocytosis_1hr"]
         subs3 = ["AKT_3hr", "pAKT_3hr", "PI3Ks_3hr", "PI3K_3hr", "GSK3B_3hr", "pGSK3B_3hr", "PTEN_3hr", "pPTEN_3hr", "PIP2_3hr", "PIP3_3hr", "P2Y12act_3hr", "P2Y12s_3hr", "Gio_3hr", "Phagocytosis_3hr"]
         subs4 = ["AKT_2hr", "pAKT_2hr", "PI3Ks_2hr", "PI3K_2hr", "GSK3B_2hr", "pGSK3B_2hr", "PTEN_2hr", "pPTEN_2hr", "PIP2_2hr", "PIP3_2hr", "P2Y12act_2hr", "P2Y12s_2hr", "Gio_2hr", "Phagocytosis_2hr"]
+        subs5 = ["AKT_max", "pAKT_max", "PI3Ks_max", "PI3K_max", "GSK3B_max", "pGSK3B_max", "PTEN_max", "pPTEN_max", "PIP2_max", "PIP3_max", "P2Y12act_max", "P2Y12s_max", "Gio_max", "Phagocytosis_max"]
         for i, l in enumerate(labels):
             if network.substrates[l].time_ranges == None:
                 random_inputs[:,i] = np.array([0.0 for _ in list(range(int(args.number)))])
@@ -112,6 +115,7 @@ if __name__ == "__main__":
         cols.extend(subs2)
         cols.extend(subs4)
         cols.extend(subs3)
+        cols.extend(subs5)
         with cf.ProcessPoolExecutor(max_workers=args.multiprocess) as executor:
             output = list(tqdm(executor.map(generate_output, random_inputs, repeat(labels), repeat(y0s), repeat(time), repeat(network), repeat(measure_times), repeat(subs)), total=len(random_inputs), desc=f"Generating Data with Range Pairs {c}"))
         output = np.array(output)
