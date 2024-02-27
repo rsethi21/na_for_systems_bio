@@ -1,0 +1,119 @@
+from typing_extensions import Literal
+exit()
+import pandas as pd
+pd.read_csv("./data/substrates.csv")
+pd.read_csv(".na_for_systems_bio/data/substrates.csv")
+pd.read_csv("./na_for_systems_bio/data/substrates.csv")
+import os
+os.cwd()
+os.getwd()
+os.getcwd()
+pd.read_csv("./substrates.csv")
+exit
+exit()
+import pandas as pd
+pd.na
+pd.isna(None)
+pd.isna('None')
+exit()
+import pandas as pd
+pd.read_csv("./data/substrates.csv")
+exit()
+import pandas as pd
+exit()
+import numpy as np
+arr = np.array([[2, 3, 4, 1], [10, 2, 20, 9]])
+arr
+arr[3]
+arr[:,[2,3]]
+max(arr[:,[2,3]])
+np.max(arr[:,[2,3]])
+np.max(arr[:,[2,3]], axis=1)
+np.max(arr[:,[2,3]], axis=0)
+exit()
+import pandas as pd
+path = "data.csv"
+df = pd.read_csv(path, index_col=0, header=0)
+df
+df["LPS"]
+for i, row in df.iterrows():
+	print(i)
+for i, row in df.iterrows():
+	print(row)
+for i, row in df.iterrows():
+	print(row.Phagocytosis)
+	print(row.Phagocytosis/row.Phagocytosis_max)
+for i, row in df.iterrows():
+	print(row.Phagocytosis)
+	print(row.Phagocytosis/row.Phagocytosis_max)
+	print(row.Phagocytosis_1hr)
+	print(row.Phagocytosis_1hr/row.Phagocytosis_max)
+	print(row.Phagocytosis_2hr)
+	print(row.Phagocytosis_2hr/row.Phagocytosis_max)
+	print(row.Phagocytosis_3hr)
+	print(row.Phagocytosis_3hr/row.Phagocytosis_max)
+for i, row in df.iterrows():
+	print(row.Phagocytosis)
+	print(row.Phagocytosis/row.Phagocytosis_max)
+	print(row.Phagocytosis_1hr)
+	print(row.Phagocytosis_1hr/row.Phagocytosis_max)
+	print(row.Phagocytosis_2hr)
+	print(row.Phagocytosis_2hr/row.Phagocytosis_max)
+	print(row.Phagocytosis_3hr)
+	print(row.Phagocytosis_3hr/row.Phagocytosis_max)
+	print()
+for i, row in df.iterrows():
+	print(row.pAKT)
+	print(row.pAKT/row.pAKT_max)
+	print(row.pAKT_1hr)
+	print(row.pAKT_1hr/row.pAKT_max)
+	print(row.pAKT_2hr)
+	print(row.pAKT_2hr/row.pAKT_max)
+	print(row.pAKT_3hr)
+	print(row.pAKT_3hr/row.pAKT_max)
+	print()
+import readline
+readline.write_history_file("./test_session.txt")
+exit
+exit()
+import pandas as pd
+transformed_data = []
+times = ["", "1hr", "2hr", "3hr"]
+substrates = ["AKT", "pAKT", "PI3Ks", "PI3K", "GSK3B", "pGSK3B", "PTEN", "pPTEN", "PIP2", "PIP3", "P2Y12act", "P2Y12s", "Gio", "Phagocytosis"]
+for i, row in df.iterrows():
+	for s in substrates:
+for i, row in df.iterrows():
+	new_row = []
+	for s in substrates:
+df = pd.read_csv("data.csv", index_col=0, header=0)
+for i, row in df.iterrows():
+	new_row = []
+	for s in substrates:
+for i, row in df.iterrows():
+	for s in substrates:
+for i, row in df.iterrows():
+	new_row = []
+	for s in substrates:
+		for t in times:
+			new_row.append(row[f"{s}_{t}"]/row[f"{s}_max"])
+times = ["", "_1hr", "_2hr", "_3hr"]
+for i, row in df.iterrows():
+	for s in substrates:
+for i, row in df.iterrows():
+	new_row = []
+	for s in substrates:
+		for t in times:
+			new_row.append(row[f"{s}{t}"]/row[f"{s}_max"])
+for i, row in df.iterrows():
+	new_row = []
+	for s in substrates:
+		for t in times:
+			new_row.append(row[f"{s}{t}"]/row[f"{s}_max"])
+	transformed_data.append(new_row)
+len(transformed_data)
+transformed_data
+import readline
+readline.write_history_file("./data_transformation_for_sensitivity_analysis")
+df
+print("Use R linear modeling to find parameters to find most substrates of the enzyme cascade that have most influence on the phagocytosis response; will tell us relative importance as well as significance")
+readline.write_history_file("./data_transformation_for_sensitivity_analysis")
