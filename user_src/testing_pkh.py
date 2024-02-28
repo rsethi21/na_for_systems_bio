@@ -19,7 +19,8 @@ def runSim(
 #    ranges = [[60,120], [60,180], [60,240]],
     amtsAtp = [1.0,1.0],
     ranges = [[60,120]],
-    amtsLps = [0.0,1.0]    # need to be same length as amtsAtp
+    amtsLps = [0.0,1.0],    # need to be same length as amtsAtp
+    params = None
 ):
 
     # parse and create all necessary objects for creating a network
@@ -39,6 +40,9 @@ def runSim(
         print(f"{l} = {t}")
     print()
 
+    if params is not None:
+      print("Applying parameters", params.keys())
+      network.set_parameters(list(params.values()), list(params.keys()))
     
 
     combos = list(P(amtsAtp, ranges))
