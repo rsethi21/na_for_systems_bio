@@ -45,6 +45,9 @@ def runSim(
       print("Applying parameters", params.keys())
       network.set_parameters(list(params.values()), list(params.keys()))
     
+    # needed for enforcing parameters 
+    for r in network.rates:
+      r.fixed=False
 
     combos = list(P(amtsAtp, ranges))
     fnames=[]
