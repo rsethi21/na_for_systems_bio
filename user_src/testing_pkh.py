@@ -33,6 +33,9 @@ def runSim(
 
     # create a new instance of a network
     network = Network("example", rates, interactions, substrates)
+    # needed for enforcing parameters 
+    for r in network.rates:
+      r.fixed=False
 
     # visualize network ordinary differential equations
     time = np.linspace(0, 500, num=501)
@@ -45,10 +48,6 @@ def runSim(
       print("Applying parameters", params.keys())
       network.set_parameters(list(params.values()), list(params.keys()))
     
-    # needed for enforcing parameters 
-    for r in network.rates:
-      r.fixed=False
-
     combos = list(P(amtsAtp, ranges))
     fnames=[]
     for i, combo in tqdm(enumerate(combos), total=len(amtsAtp)*len(ranges)):
