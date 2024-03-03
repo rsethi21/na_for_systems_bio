@@ -1,0 +1,62 @@
+---
+title: "pten_sensitivity_analysis"
+author: "Rohan Sethi"
+date: "`r Sys.Date()`"
+output: html_document
+---
+Loading Packages
+```{r, eval=FALSE}
+library(tidyverse)
+```
+
+Loading Data
+```{r}
+path = "./data.csv"
+data = read.csv(path, row.names=1)
+```
+
+Phagocytosis Sensitivity Analysis (non-ratios)
+```{r}
+phagocytosis_analysis = lm(log(Phagocytosis) ~ AKT + pAKT + PI3K + PI3Ks + GSK3B + pGSK3B + PTEN + pPTEN + PIP2 + PIP3, data)
+summary(phagocytosis_analysis)
+```
+
+Checking for Assumptions
+```{r}
+plot(phagocytosis_analysis, 1) # plot of residuals for homoscedasicity (common variance in response)
+plot(phagocytosis_analysis, 2) # check for normality of response
+```
+
+Phagocytosis Sensitivity Analysis (ratios)
+```{r}
+ratio_data = function(df, cols_num, cols_denom, response) {
+  new_data = list()
+  new_names = c()
+  for (i in 1:length(cols_num)) {
+    new_names = c(new_names, paste(cols_num[i], cols_denom[i], sep="/"))
+    new_data = c(new_data, list(df[,cols_num[i]]/df[,cols_denom[i]]))
+  }
+  new_data = c(new_data, list(df[,response]))
+  new_names = c(new_names, response)
+  transformed_data = data.frame(new_data)
+  colnames(transformed_data) = new_names
+  return(transformed_data)
+}
+```
+
+```{r}
+numerators = c("pAKT", "pPTEN", "pGSK3B", "PIP3", "PI3K")
+denominators = c("AKT", "PTEN", "GSK3B", "PIP2", "PI3Ks")
+new_df = ratio_data(data, numerators, denominators, "Phagocytosis")
+```
+
+```{r}
+phagocytosis_ratio_analysis = lm(log(Phagocytosis) ~ .*., new_df)
+summary(phagocytosis_ratio_analysis)
+```
+
+Checking for Assumptions
+```{r}
+plot(phagocytosis_ratio_analysis, 1) # plot of residuals for homoscedasicity (common variance in response)
+plot(phagocytosis_ratio_analysis, 2) # check for normality of response
+```
