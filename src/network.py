@@ -1,7 +1,8 @@
 from scipy.integrate import odeint
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
-from geneticalgorithm2 import geneticalgorithm2 as ga
+# PKH removing since don't have repo
+#from geneticalgorithm2 import geneticalgorithm2 as ga
 import numpy as np
 from tqdm import tqdm
 import pdb

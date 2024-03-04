@@ -1,5 +1,13 @@
 # Network Analysis for System Biology
 
+## input data
+The routines listed below take several csv files as inputs. 
+- interactions.csv : defines the network topology in terms of nodes (proteins) and edges (rates) 
+- rates.csv : rate definitions for network 
+- substrates.csv : node concentrations
+
+Examples for these can be found in ./input/
+
 ## Object Scripts
 ### network.py
 
