@@ -18,10 +18,17 @@ from src.score import error
 def runSim(
 #    ranges = [[60,120], [60,180], [60,240]],
     amtsAtp = [1.0,1.0],
-    ranges = [[60,120]],
+    ranges = [[60,120],[60,120]],
     amtsLps = [0.0,1.0],    # need to be same length as amtsAtp
     params = None
 ):
+    """
+    This function runs the PTEN/PI3K simulation engine. 
+    - amtsATP: ATP concentration(s) in AU. Accepts a list (minimum len of 1)
+    - ranges: Time range (min) over which ATP concentration is applied. Accepts a list of len 2 lists 
+    - amtsLps: LPS concentrations (in same format as amtsATP)
+    - params: dictionary of parameters and their values (optional) 
+    """ 
 
     # parse and create all necessary objects for creating a network
     path="na_for_systems_bio"
