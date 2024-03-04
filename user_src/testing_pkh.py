@@ -20,7 +20,8 @@ def runSim(
     amtsAtp = [1.0,1.0],
     ranges = [[60,120],[60,120]],
     amtsLps = [0.0,1.0],    # need to be same length as amtsAtp
-    params = None
+    params = None,
+    tag = None
 ):
     """
     This function runs the PTEN/PI3K simulation engine. 
@@ -31,7 +32,7 @@ def runSim(
     """ 
 
     # parse and create all necessary objects for creating a network
-    path="na_for_systems_bio"
+    #path="na_for_systems_bio"
     path="pten/input/input_atp_data/"
     rates = parse_rates(path+"/rates.csv")
     substrates = parse_substrates(path+"/substrates.csv", rates)
@@ -39,6 +40,9 @@ def runSim(
 
     # create a new instance of a network
     network = Network("example", rates, interactions, substrates)
+    # needed for enforcing parameters 
+    for r in network.rates:
+      r.fixed=False
 
     # visualize network ordinary differential equations
     time = np.linspace(0, 500, num=501)
@@ -51,7 +55,6 @@ def runSim(
       print("Applying parameters", params.keys())
       network.set_parameters(list(params.values()), list(params.keys()))
     
-
     combos = list(P(amtsAtp, ranges))
     fnames=[]
     for i, combo in tqdm(enumerate(combos), total=len(amtsAtp)*len(ranges)):
@@ -70,6 +73,8 @@ def runSim(
         # args.output
         output="./"
         fname = f"atp_{combo[0]}_{combo[1]}_lps_{amtsLps[i]}.csv"
+        if tag is not None:
+          fname = tag + "_" + fname
         temp_df.to_csv(os.path.join(output, fname))
         fnames.append(fname)
     return fnames 
@@ -106,3 +111,5 @@ def Plotter(df,substrate='ATP',tag="",**kwargs):
   conc = np.ones(np.shape(idx)[0])+substratePos
   plt.plot(idx,conc,substrateCol,linewidth=5,label=substrate )
   plt.legend( loc=0 )
+
+
