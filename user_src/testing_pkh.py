@@ -61,8 +61,10 @@ def runSim(
         network.substrates["ATP"].max_value = combo[0]
         network.substrates["ATP"].time_ranges = [combo[1]]
         # RS - generalize 
-        print(amtsLps[i])
-        network.substrates["LPS"].max_value = amtsLps[i]
+        j = i % 2 
+        print(amtsLps[j]) 
+        print("FIX THIS PETE")
+        network.substrates["LPS"].max_value =  amtsLps[j]
         network.substrates["LPS"].time_ranges = [combo[1]]
 
     # check post-training training error
@@ -72,7 +74,7 @@ def runSim(
         temp_df = pd.DataFrame(mean_y,columns=list(network.substrates.keys()))
         # args.output
         output="./"
-        fname = f"atp_{combo[0]}_{combo[1]}_lps_{amtsLps[i]}.csv"
+        fname = f"atp_{combo[0]}_{combo[1]}_lps_{amtsLps[j]}.csv"
         if tag is not None:
           fname = tag + "_" + fname
         temp_df.to_csv(os.path.join(output, fname))
