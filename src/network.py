@@ -233,7 +233,7 @@ class Network:
             y = folds_y.copy()
             for t in range(y.shape[0]):
                 for index, s in enumerate(self.substrates.values()):
-                    if s.type == "non-stimulus":
+                    if s.__getattribute__("type") == "non-stimulus":
                         y[t,index] = folds_y[t,index]/probe[index]
                     else:
                         y[t, index] = folds_y[t,index]
@@ -260,7 +260,7 @@ class Network:
             for _ in tqdm(range(samples),desc="Generating Random Initial",total=samples, disable=~verbose):
                 y0 = []
                 for i, s in enumerate(self.substrates.values()):
-                    if s.type == "stimulus":
+                    if s.__getattribute__("type") == "stimulus":
                         y0.append(0.0)
                     else:
                         y0.append(2**np.random.randn())
@@ -279,7 +279,7 @@ class Network:
                 temp_fig = plt.figure()
                 for i, s in tqdm(enumerate(self.substrates.values()), desc="Plotting Each Substrates", total=len(self.substrates), disable=~verbose):
                     if s.identifier in substrates_to_plot:
-                        if s.type != "stimulus":
+                        if s.__getattribute__("type") != "stimulus":
                             plt.fill_between(time, min_y[:,i], max_y[:,i], color=self.colors[i], alpha=0.2)
                         plt.plot(time, mean_y[:,i], color=self.colors[i],label=s.__getattribute__("identifier"),linewidth=1.0)
                 plt.xlabel("Time (mins)")
@@ -290,7 +290,7 @@ class Network:
             else:
                 for i, s in tqdm(enumerate(self.substrates.values()), desc="Plotting Each Substrates", total=len(self.substrates), disable=~verbose):
                     if s.identifier in substrates_to_plot:
-                        if s.type != "stimulus":
+                        if s.__getattribute__("type") != "stimulus":
                             axis.fill_between(time, min_y[:,i], max_y[:,i], color=self.colors[i], alpha=0.2)
                         axis.plot(time, mean_y[:,i], color=self.colors[i],label=s.__getattribute__("identifier"),linewidth=1.0)
         if output_figure and return_min_max and axis==None:
@@ -308,7 +308,7 @@ class Network:
         for _ in tqdm(range(number),desc="Generating Random Initial",total=number, disable=True):
             y0 = []
             for i, s in enumerate(self.substrates.values()):
-                if s.type == "stimulus":
+                if s.__getattribute__("type") == "stimulus":
                     y0.append(0.0)
                 else:
                     y0.append(2**np.random.randn())
