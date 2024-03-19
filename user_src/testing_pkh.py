@@ -21,7 +21,8 @@ def runSim(
     ranges = [[60,120],[60,120]],
     amtsLps = [0.0,1.0],    # need to be same length as amtsAtp
     params = None,
-    tag = None
+    tag = None,
+    norm=True   
 ):
     """
     This function runs the PTEN/PI3K simulation engine. 
@@ -29,6 +30,7 @@ def runSim(
     - ranges: Time range (min) over which ATP concentration is applied. Accepts a list of len 2 lists 
     - amtsLps: LPS concentrations (in same format as amtsATP)
     - params: dictionary of parameters and their values (optional) 
+    - norm: normalize results based on their value at t=0
     """ 
 
     # parse and create all necessary objects for creating a network
@@ -60,21 +62,24 @@ def runSim(
     for i, combo in tqdm(enumerate(combos), total=len(amtsAtp)*len(ranges)):
         network.substrates["ATP"].max_value = combo[0]
         network.substrates["ATP"].time_ranges = [combo[1]]
-        # RS - generalize 
-        j = i % 2 
-        print(amtsLps[j]) 
-        print("FIX THIS PETE")
-        network.substrates["LPS"].max_value =  amtsLps[j]
+    for i, combo in tqdm(enumerate(combos), total=len(amtsLps)*len(ranges)):
+        network.substrates["LPS"].max_value =  combo[0]
         network.substrates["LPS"].time_ranges = [combo[1]]
 
     # check post-training training error
     # args.number
         n=5; # hopefully this is correct
-        mean_y, f = network.graph_distributions(time,n , substrates_to_plot=["PI3K", "pAKT", "pPTEN", "Phagocytosis","ATP"], normalize=True, path="./", output_figure=True)
+        mean_y, f = network.graph_distributions(
+          time,n , 
+          substrates_to_plot=["PI3K", "pAKT", "pPTEN", "Phagocytosis","ATP"], 
+          normalize=norm, path="./", output_figure=True)
         temp_df = pd.DataFrame(mean_y,columns=list(network.substrates.keys()))
         # args.output
         output="./"
-        fname = f"atp_{combo[0]}_{combo[1]}_lps_{amtsLps[j]}.csv"
+        a=network.substrates["ATP"].max_value
+        t=network.substrates["ATP"].time_ranges
+        l=network.substrates["LPS"].max_value
+        fname = f"atp_{a}_{t}_lps_{l}.csv"
         if tag is not None:
           fname = tag + "_" + fname
         temp_df.to_csv(os.path.join(output, fname))
