@@ -20,8 +20,10 @@ def runSim(
     amtsAtp = [1.0,1.0],
     ranges = [[60,120],[60,120]],
     amtsLps = [0.0,1.0],    # need to be same length as amtsAtp
+    path="pten/input/input_atp_data/",
     params = None,
     tag = None,
+    parametersFile = None,
     norm=True   
 ):
     """
@@ -30,15 +32,16 @@ def runSim(
     - ranges: Time range (min) over which ATP concentration is applied. Accepts a list of len 2 lists 
     - amtsLps: LPS concentrations (in same format as amtsATP)
     - params: dictionary of parameters and their values (optional) 
+    - parametersFile: json file of pretraining parameters 
     - norm: normalize results based on their value at t=0
     """ 
 
     # parse and create all necessary objects for creating a network
     #path="na_for_systems_bio"
-    path="pten/input/input_atp_data/"
     rates = parse_rates(path+"/rates.csv")
     substrates = parse_substrates(path+"/substrates.csv", rates)
     interactions = parse_interactions(path+"/interactions.csv", rates, substrates)
+    # also need to load fitted_params.json
 
     # create a new instance of a network
     network = Network("example", rates, interactions, substrates)
@@ -52,6 +55,14 @@ def runSim(
     for l, t in derivatives.items():
         print(f"{l} = {t}")
     print()
+
+    # load in pretrained parameters if any
+    if parametersFile != None:
+        with open(parametersFile, "r") as fitted_params:
+            parameters = json.load(fitted_params)
+        network.set_parameters(list(parameters.values()), list(parameters.keys()))
+
+    
 
     if params is not None:
       print("Applying parameters", params.keys())
@@ -118,5 +129,70 @@ def Plotter(df,substrate='ATP',tag="",**kwargs):
   conc = np.ones(np.shape(idx)[0])+substratePos
   plt.plot(idx,conc,substrateCol,linewidth=5,label=substrate )
   plt.legend( loc=0 )
+
+
+#!/usr/bin/env python
+import sys
+##################################
+#
+# Revisions
+#       10.08.10 inception
+#
+##################################
+
+#
+# ROUTINE  
+#
+def doit(fileIn):
+  1
+
+
+#
+# Message printed when program run without arguments 
+#
+def helpmsg():
+  scriptName= sys.argv[0]
+  msg="""
+Purpose: 
+ 
+Usage:
+"""
+  msg+="  %s -validation" % (scriptName)
+  msg+="""
+  
+ 
+Notes:
+
+"""
+  return msg
+
+#
+# MAIN routine executed when launching this script from command line 
+#
+if __name__ == "__main__":
+  import sys
+  msg = helpmsg()
+  remap = "none"
+
+  if len(sys.argv) < 2:
+      raise RuntimeError(msg)
+
+  # Loops over each argument in the command line 
+  for i,arg in enumerate(sys.argv):
+    # calls 'doit' with the next argument following the argument '-validation'
+    if(arg=="-validation"):
+      #arg1=sys.argv[i+1] 
+      #doit(arg1)
+      path="input/input_atp_data/"
+      runSim(parametersFile="fitted_params/fitted_params.json")
+  
+
+
+
+
+
+  raise RuntimeError("Arguments not understood")
+
+
 
 
