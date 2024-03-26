@@ -49,9 +49,10 @@ if __name__ == "__main__":
         with open(args.parameters, "r") as fitted_params:
             parameters = json.load(fitted_params)
         network.set_parameters(list(parameters.values()), list(parameters.keys()))
- 
+
     amts = [1.0]
     ranges = [[60,120]]
+    initials = [[1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0]]
     combos = list(P(amts, ranges))
     combo_figure = plt.figure()
     for i, combo in tqdm(enumerate(combos), total=len(amts)*len(ranges)):
@@ -59,11 +60,11 @@ if __name__ == "__main__":
         network.substrates["ATP"].time_ranges = [combo[1]]
 
     # check post-training training error
-        mean_y_regular = network.graph_distributions(time, args.number, substrates_to_plot=["ATP"], normalize=False)
-        print(f"Originally r4 was: {network.parameters['r4'].value}")
-        network.parameters["r4"].value = 0.15
-        mean_y_decrP2Y12 = network.graph_distributions(time, args.number, substrates_to_plot=["ATP"], normalize=False)
-        print(f"Adjusted r4 was: {network.parameters['r4'].value}")
+        mean_y_regular = network.graph_distributions(time, args.number, substrates_to_plot=["ATP"], normalize=False, initials=initials)
+        print(f"Originally s3 was: {network.parameters['s3'].value}")
+        network.parameters["s3"].value = 20
+        mean_y_decrP2Y12 = network.graph_distributions(time, args.number, substrates_to_plot=["ATP"], normalize=False, initials=initials)
+        print(f"Adjusted s3 was: {network.parameters['s3'].value}")
         index = list(network.substrates.keys()).index("pAKT")
         plt.plot(range(len(mean_y_regular[:,index])), mean_y_regular[:,index], label="ctrl")
         plt.plot(range(len(mean_y_decrP2Y12[:,index])), mean_y_decrP2Y12[:,index], label="cond")
