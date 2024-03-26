@@ -2,22 +2,77 @@ import sys
 sys.path.append(f"{sys.path[0]}/..")
 
 from src.network import Network
+from src.parse import *
 import unittest
+import numpy as np
 import argparse
-import pyyaml
+import json
+from itertools import product as P
+from tqdm import tqdm
 
-class TestLPSEffectOnPTEN(unittest.TestCase):
-    def runTest(self):
-        # [AKT, pAKT, PTEN, pPTEN, PIP2, PIP3, PI3K, PI3Ks, GSK3B, pGSK3B, TNFa, Phagocytosis, P2Y12act, P2Y12s, Gio]
-        initial_conditions = [[1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0]]
-        stimuli_range = [[60, 120]]
-        stimuli_amt = 1.0
-        time = None
+parser = argparse.ArgumentParser()
+parser.add_argument("-s", "--substrates", help="substrates csv", required=True)
+parser.add_argument("-r", "--rates", help="rates csv", required=True)
+parser.add_argument("-i", "--interactions", help="interactions csv", required=True)
+parser.add_argument("-p", "--parameters", help="pretrained parameters json file", required=False, default=None)
+parser.add_argument("-t", "--test_configs", help="test configuration json file", required=True)
 
-class TestLPSEffectOnTotalPTEN(unittest.TestCase):
-    def runTest(self):
+def setUp(self, network, substrate_of_interest, stimuli_of_interest, initial_conditions, stimuli_range, stimuli_amts, time, expectations):
+    self.network = network
+    self.substrate_index = substrate_of_interest
+    self.stimuli_index = stimuli_of_interest
+    self.initial_conditions = initial_conditions
+    self.stimuli_range = stimuli_range
+    self.stimuli_amts = stimuli_amts
+    self.time = time
+    self.expectations = [True if expectation == "T" else False for expectation in expectations]
+
+class TestStimuliEffectOnSubstrates(unittest.TestCase):
+    def __init__(self, testName, network, substrate_of_interests, stimuli_of_interest, initial_conditions, stimuli_range, stimuli_amts, time, expectations):
+        super().__init__(testName)
+        self.network = network
+        self.substrate_indices = [list(network.substrates.keys()).index(i) for i in substrate_of_interests]
+        self.stimuli_index = stimuli_of_interest
+        self.initial_conditions = initial_conditions
+        self.stimuli_range = stimuli_range
+        self.stimuli_amts = stimuli_amts
+        self.time = time
+        self.expectations = expectations
+
+    # def StimuliEffectOnSubstrates(self):
+    #     # [AKT, pAKT, PTEN, pPTEN, PIP2, PIP3, PI3K, PI3Ks, GSK3B, pGSK3B, TNFa, Phagocytosis, P2Y12act, P2Y12s, Gio]
+    #     initial_conditions = [1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0]
+    #     stimuli_range = [[60, 120]]
+    #     stimuli_amt = 1.0
+    #     time = np.linspace(0, 500, 501)
+    
+    def ConstatntTotalSubstrateUponStimuli(self):
         # [AKT, pAKT, PTEN, pPTEN, PIP2, PIP3, PI3K, PI3Ks, GSK3B, pGSK3B, TNFa, Phagocytosis, P2Y12act, P2Y12s, Gio]
-        initial_conditions = [[1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0]]
-        stimuli_range = [[60, 120]]
-        stimuli_amt = 1.0
-        time = None
+        self.network.substrates[self.stimuli_index].max_value = self.stimuli_amts[0]
+        self.network.substrates[self.stimuli_index].time_ranges = [self.stimuli_range]
+        self.network.set_initials(self.initial_conditions)
+        trajectory = self.network.graph(np.linspace(self.time[0], self.time[1], num=self.time[1]+1), substrates_to_plot=["PTEN", "pPTEN"], path="./test.png")
+        sums = trajectory[:,self.substrate_indices[0]] + trajectory[:,self.substrate_indices[1]]
+        check = sum(sums[self.stimuli_range[0]-5:self.stimuli_range[1]+5])/len(sums[self.stimuli_range[0]-5:self.stimuli_range[1]+5])
+        print(f"Checking if {check} ~= {sums[0]}...")
+        self.assertAlmostEqual(sums[0], check, f"Total substrate upon stimulation by {self.stimuli_index} is not constant.")
+if __name__ == "__main__":
+
+    # open arguments
+    args = parser.parse_args()
+    # parse and create all necessary objects for creating a network
+    rates = parse_rates(args.rates)
+    substrates = parse_substrates(args.substrates, rates)
+    interactions = parse_interactions(args.interactions, rates, substrates)
+    # create a new instance of a network
+    network = Network("example", rates, interactions, substrates)
+    if args.parameters != None:
+        with open(args.parameters, "r") as fitted_params:
+            parameters = json.load(fitted_params)
+        network.set_parameters(list(parameters.values()), list(parameters.keys()))
+    with open(args.test_configs, "r") as configurations:
+        tc = json.load(configurations)
+
+    suite = unittest.TestSuite()
+    suite.addTest(TestStimuliEffectOnSubstrates("ConstatntTotalSubstrateUponStimuli", network, tc["substrate_of_interests"], tc["stimuli_of_interest"], tc["initial_conditions"], tc["stimuli_range"], tc["stimuli_amts"], tc["time"], tc["expectations"]))
+    unittest.TextTestRunner(verbosity=2).run(suite)

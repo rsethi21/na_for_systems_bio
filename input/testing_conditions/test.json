@@ -1,0 +1,9 @@
+{
+    "substrate_of_interests": ["PTEN", "pPTEN"],
+    "stimuli_of_interest": "LPS",
+    "initial_conditions": [1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0],
+    "stimuli_range": [60, 120],
+    "stimuli_amts": [1.0],
+    "time": [0, 500],
+    "expectations": ["T", "T"]
+}

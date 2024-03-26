@@ -218,7 +218,7 @@ class Network:
 
         return dydt
     
-    def graph(self, time, normalize=False, substrates_to_plot=None, path="./figure.png", output_figure=False):
+    def graph(self, time, normalize=False, substrates_to_plot=[], path="./figure.png", output_figure=False):
         if normalize:
             normalize_time = np.linspace(0, 500, 501)
             stimuli_ranges = []
