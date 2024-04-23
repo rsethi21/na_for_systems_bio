@@ -153,15 +153,15 @@ class Network:
                             after = False
                 if substrate_of_interest.__getattribute__("r") != None and time_ranges != None:
                     r = substrate_of_interest.__getattribute__("r").__getattribute__("value")
-                    if current_val == max_val:
+                    if abs(current_val - max_val) <= 0.001:
                         substrate_of_interest.reached = True
-                    if between and substrate_of_interest.reached==False:
+                    if between and not substrate_of_interest.reached:
                         dydt[substrate_id] = max_val - current_val
-                    elif between and substrate_of_interest.reached==True:
+                    elif between and substrate_of_interest.reached:
                         dydt[substrate_id] = -1*r*current_val
                     elif after:
                         dydt[substrate_id] = -1*r*current_val
-                    elif before:
+                    else:
                         dydt[substrate_id] = 0
                 else:
                     if between:
@@ -245,7 +245,9 @@ class Network:
                         y[t, index] = folds_y[t,index]
         else:
             y = odeint(self.get_dydt, self.get_initials(), time)
-        fig = plt.figure() 
+        for s in self.substrates.values():
+            s.__setattr__("reached", False)
+        fig = plt.figure()
         if path != None:
             for i, substrate in tqdm(enumerate(list(self.substrates.values())), desc="Plotting Each Substrate", total=len(self.substrates)):
                 if substrate.identifier in substrates_to_plot:
