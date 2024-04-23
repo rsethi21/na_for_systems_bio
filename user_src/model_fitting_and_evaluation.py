@@ -58,11 +58,11 @@ if __name__ == "__main__":
     print(error(original, fit_dictionary, list(network.substrates.keys())))
     print("BV2 --> Primary")
     print(error(original, {"Phagocytosis": {420: 0.6}}, list(network.substrates.keys())))
-    plt.figure(original_fig)
-    plt.plot(420, 0.6, "ko")
-    original_fig.savefig(os.path.join(args.output, "figure_0.png"))
-    plt.close(original_fig)
-    print()
+    # plt.figure(original_fig)
+    # plt.plot(420, 0.6, "ko")
+    # original_fig.savefig(os.path.join(args.output, "figure_0.png"))
+    # plt.close(original_fig)
+    #print()
 
     # load in pretrained parameters if any
     if args.parameters != None:
