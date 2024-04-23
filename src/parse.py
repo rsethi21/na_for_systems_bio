@@ -3,6 +3,8 @@ from src.rate import Rate
 from src.interaction import Interaction
 from src.substrate import Substrate
 
+# adding two values into one with 1 for each rate is total
+
 def parse_rates(rates_csv_path):
     rates_df = pd.read_csv(rates_csv_path)
     rates = []

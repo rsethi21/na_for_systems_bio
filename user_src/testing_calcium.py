@@ -37,7 +37,7 @@ if __name__ == "__main__":
     network = Network("example", rates, interactions, substrates)
     
     # visualize network ordinary differential equations
-    time = np.linspace(0, 500, num=501)
+    time = np.linspace(0, 1000, num=1001)
     derivatives = network.get_representation_dydt()
     for l, t in derivatives.items():
         print(f"{l} = {t}")
@@ -49,9 +49,9 @@ if __name__ == "__main__":
             parameters = json.load(fitted_params)
         network.set_parameters(list(parameters.values()), list(parameters.keys()))
 
-    amts = [0]
-    ranges = [[60,120]]
-    initials = [[1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0]]
+    amts = [1.0]
+    ranges = [[210,390]]
+    initials = [[1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0]]
     combos = list(P(amts, ranges))
     combo_figure = plt.figure()
     for i, combo in tqdm(enumerate(combos), total=len(amts)*len(ranges)):
@@ -59,16 +59,14 @@ if __name__ == "__main__":
         network.substrates["Ca2+"].time_ranges = [combo[1]]
 
     # check post-training training error
-        mean_y_regular = network.graph_distributions(time, args.number, normalize=False, initials=initials)
+        mean_y_regular = network.graph_distributions(time, args.number, normalize=True, initials=initials)
         print(f"Originally s3 was: {network.parameters['s3'].value}")
-        network.parameters["s3"].value = 20
-        mean_y_decrP2Y12 = network.graph_distributions(time, args.number, normalize=False, initials=initials)
+        mean_y_decrP2Y12 = network.graph_distributions(time, args.number, normalize=True, initials=initials)
         print(f"Adjusted s3 was: {network.parameters['s3'].value}")
-        indices = [list(network.substrates.keys()).index("PI3K"), list(network.substrates.keys()).index("Ca2+"), list(network.substrates.keys()).index("ATP")]
+        indices = [list(network.substrates.keys()).index("pAKT"), list(network.substrates.keys()).index("ATP"), list(network.substrates.keys()).index("Ca2+"), list(network.substrates.keys()).index("ADP"), list(network.substrates.keys()).index("LPS"), list(network.substrates.keys()).index("PIP3")]
         plt.plot(range(len(mean_y_regular[:,indices[0]])), mean_y_regular[:,indices])
-        plt.plot(range(len(mean_y_decrP2Y12[:,indices[0]])), mean_y_decrP2Y12[:,indices])
-    plt.legend(["ctrl-PI3K", "ctrl-Ca2+", "ctrl-ATP", "cond-PI3K", "cond-Ca2+", "cond-ATP"])
+        # plt.plot(range(len(mean_y_decrP2Y12[:,indices[0]])), mean_y_decrP2Y12[:,indices])
+    plt.legend(["ctrl-pAKT", "ctrl-ADP", "ctrl-ATP", "ctrl-Ca2+", "ctrl-LPS", "ctrl-PIP3"])
     combo_figure.savefig(os.path.join(args.output, "./combo_fig.png"))
         # temp_df = pd.DataFrame(mean_y, columns=list(network.substrates.keys()))
         # temp_df.to_csv(os.path.join(args.output, f"atp_{combo[0]}_{combo[1]}"))
-        

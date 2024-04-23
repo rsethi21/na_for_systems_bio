@@ -220,13 +220,17 @@ class Network:
                 dydt[key] = overall
                 del dydt[substrate_id]
             else:
-                pass
-
+                key = f"d[{substrate_id}]/dt"
+                del dydt[substrate_id]
+                if substrate_of_interest.r != None:
+                    dydt[key] = f"-{substrate_of_interest.r.identifier}[{substrate_id}]"
+                else:
+                    dydt[key] = 0
         return dydt
     
     def graph(self, time, normalize=False, substrates_to_plot=[], path="./figure.png", output_figure=False):
         if normalize:
-            normalize_time = np.linspace(0, 500, 501)
+            normalize_time = np.linspace(0, 1000, 1001)
             stimuli_ranges = []
             for s in self.substrates.values():
                 stimuli_ranges.append(s.time_ranges)
@@ -239,7 +243,7 @@ class Network:
             y = folds_y.copy()
             for t in range(y.shape[0]):
                 for index, s in enumerate(self.substrates.values()):
-                    if s.__getattribute__("type") == "non-stimulus":
+                    if s.__getattribute__("type") == "non-stimulus" and probe[index] > 0:
                         y[t,index] = folds_y[t,index]/probe[index]
                     else:
                         y[t, index] = folds_y[t,index]
