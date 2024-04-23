@@ -53,3 +53,4 @@ class Substrate:
         self.k = k
         self.r = r
         self.other = other
+        self.reached = False

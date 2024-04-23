@@ -153,10 +153,16 @@ class Network:
                             after = False
                 if substrate_of_interest.__getattribute__("r") != None and time_ranges != None:
                     r = substrate_of_interest.__getattribute__("r").__getattribute__("value")
-                    if between:
+                    if current_val == max_val:
+                        substrate_of_interest.reached = True
+                    if between and substrate_of_interest.reached==False:
                         dydt[substrate_id] = max_val - current_val
-                    else:
+                    elif between and substrate_of_interest.reached==True:
                         dydt[substrate_id] = -1*r*current_val
+                    elif after:
+                        dydt[substrate_id] = -1*r*current_val
+                    elif before:
+                        dydt[substrate_id] = 0
                 else:
                     if between:
                         dydt[substrate_id] = max_val - current_val
