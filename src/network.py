@@ -313,30 +313,75 @@ class Network:
             return mean_y, min_y, max_y
         else:
             return mean_y
-    def fit(self, data, time, arguments, number=1, normalize=False, obj_calc=None, mlp=1):
-        bounds, bound_types, names = self.get_bounds_information()
-        substrate_names = list(self.substrates.keys())
-        y0s = []
-        for _ in tqdm(range(number),desc="Generating Random Initial",total=number, disable=True):
-            y0 = []
-            for i, s in enumerate(self.substrates.values()):
-                if s.__getattribute__("type") == "stimulus":
-                    y0.append(0.0)
-                else:
-                    y0.append(2**np.random.randn())
-            y0s.append(y0)
-        def loss(X):
-            self.set_parameters(X, names)
-            cost = 0
-            predictions = self.graph_distributions(time, number, initials=y0s, normalize=normalize, path=None, verbose=False)
-            for substrate_id, substrate_data in data.items():
-                for time_point, truth in substrate_data.items():
-                    prediction = predictions[int(time_point), substrate_names.index(substrate_id)]
-                    if obj_calc == None:
-                        cost += (prediction - float(truth))**2
+
+    # this is a function that allows the user to search for solutions spaces of model parameters to align with one dataset
+    def fit(self, data, time, arguments, initials=None, number=1, normalize=False, obj_calc=None, mlp=1):
+    '''
+    Inputs:
+    - Required: data, time frame to fit against, fitting algorithm arguments
+    - Optional: number of random conditions, set of initials if certain initial conditions to test, whether to apply fold normalization, objective function if different, mlp processing cores to use
+    Outputs:
+    - names of parameters, fitted parameters
+    Training Data Format: json
+    Example:
+        [
+            {
+                stimuli: ["",],
+                max_values:[_,],
+                time_ranges: [ [[_,_]], ],
+                substrates: 
+                {
+                    "": 
+                        {
+                            time: _,
+                        },
+                }
+            },
+        ]
+    '''
+        bounds, bound_types, names = self.get_bounds_information() # extract information needed for fitting
+        substrate_names = list(self.substrates.keys()) # extract substrate order information for indexing purposes
+        # randomly generate starting conditions to generate a more robust fit for long-term system behavior (don't need to apply this if want to fit to a given set of intital conditions)
+        if initials == None:
+            y0s = [] # instantiate empty list
+            for _ in tqdm(range(number),desc="Generating Random Initial",total=number, disable=True): # iterate through the number of randomly generated intial conditions
+                y0 = []
+                for i, s in enumerate(self.substrates.values()): # iterate through all the substrates
+                    if s.__getattribute__("type") == "stimulus": # if the substrate is a stimulus category, use 0 for initial condition
+                        y0.append(0.0)
                     else:
-                        cost += obj_calc(prediction, truth)
-            return cost
+                        y0.append(2**np.random.randn()) # else randomly generate one
+                y0s.append(y0) # append sample conditions to a list of multiple random conditions
+        else:
+            y0s = initials
+        # calculate loss between model and data to fit against
+        def loss(X):
+            self.set_parameters(X, names) # setting parameters from current solution space
+            cost = 0 # instantiating cost
+            count = 0 # instantiating record for calculating average loss
+            # iterate through fitting data for each set of conditions data is collected
+            for entry in data:
+                # apply conditions from current fitting data condition set
+                for i, stimulus in enumerate(entry["stimuli"]):
+                    stimulus.max_value = entry["max_values"][i]
+                    stimulus.time_ranges = entry["time_ranges"][i]
+                # generating model predictions with conditions and current paramters solution set
+                predictions = self.graph_distributions(time, number, initials=y0s, normalize=normalize, path=None, verbose=False)
+                # iterate through each substrate there is data from in that condition
+                for substrate_id, substrate_data in entry["substrates"].items():
+                    # iterate throat each time point there is data for the substrate in that specific condition
+                    for time_point, truth in substrate_data.items():
+                        # extract the appropriate prediction
+                        prediction = predictions[int(time_point), substrate_names.index(substrate_id)]
+                        # calculate cost (either SE or any that one chooses)
+                        if obj_calc == None:
+                            cost += (prediction - float(truth))**2
+                            count += 1
+                        else:
+                            cost += obj_calc(prediction, truth)
+                            count += 1
+            return cost/count
+        # apply loss function and appropriate parameters to the genetic algorithm implementation
         fitting_model = ga(function = loss,
                            dimension = len(bounds),
                            variable_type = bound_types,
@@ -344,6 +389,8 @@ class Network:
                            algorithm_parameters = arguments
                            )
         
+        # run fitting
         fitting_model.run(set_function=ga.set_function_multiprocess(loss, n_jobs=mlp))
+        # apply fitted conditions
         self.set_parameters(fitting_model.result.variable, names)
         return names, fitting_model.result.variable
