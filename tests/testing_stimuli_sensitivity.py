@@ -31,6 +31,7 @@ class TestStimuliEffectOnSubstrates(unittest.TestCase):
     def __init__(self, testName, network, substrate_of_interests, stimuli_of_interest, initial_conditions, stimuli_range, stimuli_amts, time, expectations):
         super().__init__(testName)
         self.network = network
+        self.substrate_of_interests = substrate_of_interests
         self.substrate_indices = [list(network.substrates.keys()).index(i) for i in substrate_of_interests]
         self.stimuli_index = stimuli_of_interest
         self.initial_conditions = initial_conditions
@@ -39,19 +40,24 @@ class TestStimuliEffectOnSubstrates(unittest.TestCase):
         self.time = time
         self.expectations = expectations
 
-    # def StimuliEffectOnSubstrates(self):
-    #     # [AKT, pAKT, PTEN, pPTEN, PIP2, PIP3, PI3K, PI3Ks, GSK3B, pGSK3B, TNFa, Phagocytosis, P2Y12act, P2Y12s, Gio]
-    #     initial_conditions = [1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0]
-    #     stimuli_range = [[60, 120]]
-    #     stimuli_amt = 1.0
-    #     time = np.linspace(0, 500, 501)
-    
+    def StimuliEffectOnSubstrates(self):
+        # [AKT, pAKT, PTEN, pPTEN, PIP2, PIP3, PI3K, PI3Ks, GSK3B, pGSK3B, TNFa, Phagocytosis, P2Y12act, P2Y12s, Gio]
+        self.network.substrates[self.stimuli_index].time_ranges = [self.stimuli_range]
+        self.network.set_initials(self.initial_conditions)
+        max_values = []
+        min_values = []
+        for amt in self.stimuli_amts:
+            self.network.substrates[self.stimuli_index].max_value = amt
+            trajectory = self.network.graph(np.linspace(self.time[0], self.time[1], num=self.time[1]+1))
+            max_values.append(max(trajectory[self.stimuli_range[0]-5:self.stimuli_range[1]+5,self.substrate_indices[0]]))
+            min_values.append(min(trajectory[self.stimuli_range[0]-5:self.stimuli_range[1]+5,self.substrate_indices[0]]))
+
     def ConstatntTotalSubstrateUponStimuli(self):
         # [AKT, pAKT, PTEN, pPTEN, PIP2, PIP3, PI3K, PI3Ks, GSK3B, pGSK3B, TNFa, Phagocytosis, P2Y12act, P2Y12s, Gio]
         self.network.substrates[self.stimuli_index].max_value = self.stimuli_amts[0]
         self.network.substrates[self.stimuli_index].time_ranges = [self.stimuli_range]
         self.network.set_initials(self.initial_conditions)
-        trajectory = self.network.graph(np.linspace(self.time[0], self.time[1], num=self.time[1]+1), substrates_to_plot=["PTEN", "pPTEN"], path="./test.png")
+        trajectory = self.network.graph(np.linspace(self.time[0], self.time[1], num=self.time[1]+1), substrates_to_plot=self.substrate_of_interests, path="./test.png")
         sums = trajectory[:,self.substrate_indices[0]] + trajectory[:,self.substrate_indices[1]]
         check = sum(sums[self.stimuli_range[0]-5:self.stimuli_range[1]+5])/len(sums[self.stimuli_range[0]-5:self.stimuli_range[1]+5])
         print(f"Checking if {check} ~= {sums[0]}...")

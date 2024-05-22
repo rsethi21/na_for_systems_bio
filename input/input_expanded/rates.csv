@@ -10,6 +10,8 @@ identifier,value,fixed,bounds,bounds_type
 "k9",6,True,"0.01,1",real
 "k10",0.144,True,"0.01,1",real
 "k11",0.01,True,"0.01,1",real
+"k12",0.33,True,"0.01,1",real
+"k13",8,True,"0.01,1",real
 "r1",1.0,False,"0.01,1",real
 "r2",1,False,"0.01,1",real
 "r3",1,False,"0.01,1",real
@@ -19,9 +21,10 @@ identifier,value,fixed,bounds,bounds_type
 "r7",1,False,"0.01,1",real
 "r8",1.2,True,"0.01,1",real
 "r9",3,True,"0.01,1",real
-"r10",0.12,True,"0.01,1",real
+"r10",0.1,True,"0.01,1",real
 "r11",0.48,True,"0.01,1",real
 "r12",0.06,True,"0.01,1",real
+"r13",2.92,True,"0.01,1",real
 "s1",1,False,"0.01,1",real
 "s2",1,False,"0.01,1",real
 "s3",0.0006,True,"0.01,1",real

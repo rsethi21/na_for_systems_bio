@@ -14,9 +14,20 @@ identifier,iv,type,k,r,mv,trs,other
 "HDACi",0.0,"stimulus",,,0.0,,
 "Phagocytosis",0.0,"non-stimulus","k7","r7",,,
 "LY294-002",0.0,"stimulus",,,0.0,,
+<<<<<<< HEAD
 "ATP",0.0,"stimulus",,"r10",0.0,,
 "P2Y12act",0.0,"non-stimulus","k8","r8",,,"P2Y12s"
 "P2Y12s",1.0,"non-stimulus","r8","k8",,,"P2Y12act"
 "Gio",1.0,"non-stimulus","k9","r9",,,
 "Ca2+",0.0,"stimulus",,"r12",0.0,,
 "ADP",0.0,"non-stimulus","r10","r11",,,"ATP"
+=======
+"ATP",0.0,"stimulus",,"r10",0.0,"210,390",
+"P2Y12act",0.0,"non-stimulus","k8","r8",,,"P2Y12s"
+"P2Y12s",1.0,"non-stimulus","r8","k8",,,"P2Y12act"
+"Gio",1.0,"non-stimulus","k9","r9",,,
+"Ca2+",0.0,"stimulus",,"r12",0.0,"210,390",
+"ADP",0.0,"non-stimulus","r10","r11",,,"ATP"
+"FF",1.0,"non-stimulus","r13","k12",,,"pFF"
+"pFF",0.0,"non-stimulus","k12","r13",,,"FF"
+>>>>>>> 665bad073c7e958175e5f19b6a9ee302f6645c85
