@@ -106,7 +106,7 @@ class Network:
                 k = substrate_of_interest.__getattribute__("k") # extract phophorylation/activation rate
                 r = substrate_of_interest.__getattribute__("r") # extract dephosphorylation/deactivation rate
                 if substrate_of_interest.other != None:
-                    upreg_term = 1*k.__getattribute__("value")*other.__getattribute__("current_value") # by default apply opposite form of the substrate to positive
+                    upreg_term = 1*k.__getattribute__("value")*self.substrates[substrate_of_interest.other].__getattribute__("current_value") # by default apply opposite form of the substrate to positive
                 else:
                     upreg_term = 1*k.__getattribute__("value") # otherwise just instantiate with activation rate
                 downreg_term = -1*r.__getattribute__("value")*substrate_of_interest.__getattribute__("current_value") #  by default substrate will be deacticated by itself
@@ -160,7 +160,7 @@ class Network:
                                 between = False
                                 break
                             # if this is not the last range to probe and in the next range then allow for check in the next range
-                            elif time_ranges[i+1][0] =< time:
+                            elif time_ranges[i+1][0] <= time:
                                 continue
                         # if not between or after, then before so no rate applied
                         else:
@@ -338,29 +338,29 @@ class Network:
 
     # this is a function that allows the user to search for solutions spaces of model parameters to align with one dataset
     def fit(self, data, time, arguments, initials=None, number=1, normalize=False, obj_calc=None, mlp=1):
-    '''
-    Inputs:
-    - Required: data, time frame to fit against, fitting algorithm arguments
-    - Optional: number of random conditions, set of initials if certain initial conditions to test, whether to apply fold normalization, objective function if different, mlp processing cores to use
-    Outputs:
-    - names of parameters, fitted parameters
-    Training Data Format: json
-    Example:
-        [
-            {
-                stimuli: ["",],
-                max_values:[_,],
-                time_ranges: [ [[_,_]], ],
-                substrates: 
+        '''
+        Inputs:
+        - Required: data, time frame to fit against, fitting algorithm arguments
+        - Optional: number of random conditions, set of initials if certain initial conditions to test, whether to apply fold normalization, objective function if different, mlp processing cores to use
+        Outputs:
+        - names of parameters, fitted parameters
+        Training Data Format: json
+        Example:
+            [
                 {
-                    "": 
-                        {
-                            time: _,
-                        },
-                }
-            },
-        ]
-    '''
+                    stimuli: ["",],
+                    max_values:[_,],
+                    time_ranges: [ [[_,_]], ],
+                    substrates: 
+                    {
+                        "": 
+                            {
+                                time: _,
+                            },
+                    }
+                },
+            ]
+        '''
         bounds, bound_types, names = self.get_bounds_information() # extract information needed for fitting
         substrate_names = list(self.substrates.keys()) # extract substrate order information for indexing purposes
         # randomly generate starting conditions to generate a more robust fit for long-term system behavior (don't need to apply this if want to fit to a given set of intital conditions)
