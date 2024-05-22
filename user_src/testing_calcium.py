@@ -49,7 +49,7 @@ if __name__ == "__main__":
             parameters = json.load(fitted_params)
         network.set_parameters(list(parameters.values()), list(parameters.keys()))
 
-    amts = [1.0]
+    amts = [0.0]
     ranges = [[210,390]]
     initials = [[1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0]]
     combos = list(P(amts, ranges))
@@ -61,12 +61,12 @@ if __name__ == "__main__":
     # check post-training training error
         mean_y_regular = network.graph_distributions(time, args.number, normalize=True, initials=initials)
         print(f"Originally s3 was: {network.parameters['s3'].value}")
-        mean_y_decrP2Y12 = network.graph_distributions(time, args.number, normalize=True, initials=initials)
-        print(f"Adjusted s3 was: {network.parameters['s3'].value}")
-        indices = [list(network.substrates.keys()).index("pAKT"), list(network.substrates.keys()).index("ATP"), list(network.substrates.keys()).index("Ca2+"), list(network.substrates.keys()).index("ADP"), list(network.substrates.keys()).index("LPS"), list(network.substrates.keys()).index("PIP3")]
+    #    mean_y_decrP2Y12 = network.graph_distributions(time, args.number, normalize=True, initials=initials)
+    #    print(f"Adjusted s3 was: {network.parameters['s3'].value}")
+        indices = [list(network.substrates.keys()).index("PIP3"), list(network.substrates.keys()).index("pAKT"), list(network.substrates.keys()).index("pPTEN"), list(network.substrates.keys()).index("LPS")]
         plt.plot(range(len(mean_y_regular[:,indices[0]])), mean_y_regular[:,indices])
         # plt.plot(range(len(mean_y_decrP2Y12[:,indices[0]])), mean_y_decrP2Y12[:,indices])
-    plt.legend(["ctrl-pAKT", "ctrl-ADP", "ctrl-ATP", "ctrl-Ca2+", "ctrl-LPS", "ctrl-PIP3"])
+    plt.legend(["ctrl-PIP3", "ctrl-pAKT", "ctrl-pPTEN", "ctrl-LPS"])
     combo_figure.savefig(os.path.join(args.output, "./combo_fig.png"))
         # temp_df = pd.DataFrame(mean_y, columns=list(network.substrates.keys()))
         # temp_df.to_csv(os.path.join(args.output, f"atp_{combo[0]}_{combo[1]}"))
