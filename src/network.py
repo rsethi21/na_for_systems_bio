@@ -17,11 +17,9 @@ class Network:
         self.initial_parameter_values = {parameter_id: parameter.__getattribute__("value") for parameter_id, parameter in self.parameters.items()}
         self.parsed_interactions = self.parse_interactions()
         self.rates = rates
-
-        np.random.seed(2824)
         self.colors = list(mcolors.CSS4_COLORS.keys())
-        np.random.shuffle(self.colors)
-    
+        self.colors = sorted(self.colors)
+
     def get_all_parameters(self):
         parameters = {}
         for interaction in list(self.interactions.values()):
@@ -44,10 +42,6 @@ class Network:
             if i in rate_names:
                 parameter.update_rate(X[rate_names.index(i)])
 
-    def set_currents(self, new_currents):
-        for substrate, new_current in zip(list(self.substrates.values()), new_currents):
-            substrate.__setattr__("current_value", new_current)
-
     def get_initials(self):
         y0 = []
         for substrate in list(self.substrates.values()):
@@ -62,12 +56,16 @@ class Network:
         for substrate, new_initial in zip(list(self.substrates.values()), new_initials):
             substrate.__setattr__("current_value", new_initial)
 
-    def reset(self):
+    def reset_intials(self):
         for sub_id, substrate in self.substrates.items():
             substrate.__setattr__("current_value", substrate.initial_value)
         for rate_id, rate in self.parameters.items():
             rate.update_rate(self.initial_parameter_values[rate_id])
     
+    def unfreeze_paramters(self, parameter_ids):
+        for parameter_id in parameter_ids:
+            self.parameters[parameter_id].__setattr__("fixed", False)
+
     def freeze_parameters(self, parameter_ids):
         for parameter_id in parameter_ids:
             self.parameters[parameter_id].__setattr__("fixed", True)
@@ -92,77 +90,102 @@ class Network:
                     parsed_interactions[substrate_id][rate_id].append((substrate2, interaction.__getattribute__("effect")))
         return parsed_interactions
 
+    # piece together derivatives for plotting purposes
     def get_dydt(self, y, time):
-        self.set_currents(y)
-        dydt = {substrate_id: 0 for substrate_id in list(self.substrates.keys())}
+        '''
+        Inputs: current state of substrates, current time
+        Outputs: predicted change in substrates
+        '''
+        self.set_currents(y) # set the current state of system substrates
+        dydt = {substrate_id: 0 for substrate_id in list(self.substrates.keys())} # instantiate dictionary to hold differential equations
+        # iterate through each substrate
         for substrate_id in list(dydt.keys()):
-            substrate_of_interest = self.substrates[substrate_id]
-            if substrate_of_interest.other != None:
-                other = self.substrates[substrate_of_interest.other]
-            else:
-                other = None
+            substrate_of_interest = self.substrates[substrate_id] # extract substrate object
+            # check if substrate is not a stimulus
             if substrate_of_interest.__getattribute__("type") == "non-stimulus":
-                k = substrate_of_interest.__getattribute__("k")
-                r = substrate_of_interest.__getattribute__("r")
+                k = substrate_of_interest.__getattribute__("k") # extract phophorylation/activation rate
+                r = substrate_of_interest.__getattribute__("r") # extract dephosphorylation/deactivation rate
                 if substrate_of_interest.other != None:
-                    upreg_term = 1*k.__getattribute__("value")*other.__getattribute__("current_value")
+                    upreg_term = 1*k.__getattribute__("value")*other.__getattribute__("current_value") # by default apply opposite form of the substrate to positive
                 else:
-                    upreg_term = 1*k.__getattribute__("value")
-                downreg_term = -1*r.__getattribute__("value")*substrate_of_interest.__getattribute__("current_value")
-                terms = {k.__getattribute__("identifier"): upreg_term, r.__getattribute__("identifier"): downreg_term}
-                for parameter_id, associated_interactions in self.parsed_interactions[substrate_id].items():
+                    upreg_term = 1*k.__getattribute__("value") # otherwise just instantiate with activation rate
+                downreg_term = -1*r.__getattribute__("value")*substrate_of_interest.__getattribute__("current_value") #  by default substrate will be deacticated by itself
+                terms = {k.__getattribute__("identifier"): upreg_term, r.__getattribute__("identifier"): downreg_term} # store terms for ease of parsing interactions
+                for parameter_id, associated_interactions in self.parsed_interactions[substrate_id].items(): # iterate throat each interaction parameter related to a specific substrate
                     if parameter_id not in list(terms.keys()):
-                        temporary_term = self.parameters[parameter_id].__getattribute__("value")*associated_interactions[0][1] # check this
+                        temporary_term = self.parameters[parameter_id].__getattribute__("value")*associated_interactions[0][1] # add any additional terms that are not related to activation/deactivation rates
                     else:
-                        temporary_term = terms[parameter_id]
-                    for interaction in associated_interactions:
-                        if len(interaction) == 2:
-                            temporary_term *= self.substrates[interaction[0]].__getattribute__("current_value")
-                        else:
-                            if interaction[1] == -1:
+                        temporary_term = terms[parameter_id] # if already in terms then extract the parameter of interest
+                    for interaction in associated_interactions: # iterate throat each interaction pair
+                        if len(interaction) == 2: # check if first order iteraction between substrate
+                            temporary_term *= self.substrates[interaction[0]].__getattribute__("current_value") # apply substrate iteraction to current term
+                        else: #  else assume using hill equation
+                            if interaction[1] == -1: # if negative iteraction then negative feedback term
                                 substrate = self.substrates[interaction[0]].__getattribute__("current_value")
                                 Km = self.parameters[interaction[2]].__getattribute__("value")
                                 n = self.parameters[interaction[3]].__getattribute__("value")
                                 temporary_term = temporary_term * (Km**n/(substrate**n + Km**n))
-                            else:
+                            else: # else then positive feedback term
                                 substrate = self.substrates[interaction[0]].__getattribute__("current_value")
                                 Km = self.parameters[interaction[2]].__getattribute__("value")
                                 n = self.parameters[interaction[3]].__getattribute__("value")
                                 temporary_term = temporary_term * ((substrate**n + Km**n)/Km**n)
-                    terms[parameter_id] = temporary_term
+                    terms[parameter_id] = temporary_term # apply calculations of the term of interest to the appropriate location in terms dictionary
                 dydt[substrate_id] = sum(list(terms.values()))
+            # if substrate is a stimulus
             else:
-                max_val = substrate_of_interest.__getattribute__("max_value")
-                current_val = substrate_of_interest.__getattribute__("current_value")
-                time_ranges = substrate_of_interest.__getattribute__("time_ranges")
-                if time_ranges == None:
+                max_val = substrate_of_interest.__getattribute__("max_value") # extract max value
+                current_val = substrate_of_interest.__getattribute__("current_value") # extract current_value/initial value
+                time_ranges = substrate_of_interest.__getattribute__("time_ranges") # extract time range of interaction
+                if time_ranges == None: # check if any time ranges specified for application of stimulus
                     between = False
                     after = False
-                else:
-                    for time_range in reversed(time_ranges):
+                else: # manually check at each of the time ranges
+                    for i, time_range in enumerate(time_ranges): # iterate through each time range
+                        # check if current time is in between the current range probed
                         if time >= time_range[0] and time <= time_range[1]:
                             between = True
                             after = False
                             break
+                        # check if current time is after the current range probed
                         elif time > time_range[1] and time > time_range[0]:
-                            after = True
-                            between = False
-                            break
+                            # if this is the last range to probe, then the after rate can be applied
+                            if i == len(time_ranges) - 1:
+                                after = True
+                                between = False
+                                break
+                            # if this is not the last range to probe and not in next range to probe then after rate can be applied
+                            elif time_ranges[i+1][0] > time:
+                                after = True
+                                between = False
+                                break
+                            # if this is not the last range to probe and in the next range then allow for check in the next range
+                            elif time_ranges[i+1][0] =< time:
+                                continue
+                        # if not between or after, then before so no rate applied
                         else:
                             between = False
                             after = False
+                # check to see if the stimuli has a deprication rate assigned
                 if substrate_of_interest.__getattribute__("r") != None and time_ranges != None:
+                    # extract deprication rate
                     r = substrate_of_interest.__getattribute__("r").__getattribute__("value")
+                    # check to see if the substrate has reached the max value within certain error (1000ths by default)
                     if abs(current_val - max_val) <= 0.001:
-                        substrate_of_interest.reached = True
+                        substrate_of_interest.reached = True # marker for if reached
+                    # if between and not reached then allow to reach max value
                     if between and not substrate_of_interest.reached:
                         dydt[substrate_id] = max_val - current_val
+                    # if between and reached, then apply deprication rate
                     elif between and substrate_of_interest.reached:
                         dydt[substrate_id] = -1*r*current_val
+                    # if after then apply depcrication
                     elif after:
                         dydt[substrate_id] = -1*r*current_val
+                    # if before then no rate
                     else:
                         dydt[substrate_id] = 0
+                # apply same conditions but without deprication
                 else:
                     if between:
                         dydt[substrate_id] = max_val - current_val
@@ -170,7 +193,6 @@ class Network:
                         dydt[substrate_id] = -current_val
                     else:
                         dydt[substrate_id] = 0
-
         return list(dydt.values())
 
     def get_representation_dydt(self):
