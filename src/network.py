@@ -62,6 +62,12 @@ class Network:
         for rate_id, rate in self.parameters.items():
             rate.update_rate(self.initial_parameter_values[rate_id])
     
+    def reset_stimuli(self):
+        for sub_id, substrate in self.substrates.items():
+            if substrate.__getattribute__("type") == "stimulus":
+                substrate.__setattr__("max_value", 0.0)
+                substrate.__setattr__("time_ranges", None)
+
     def unfreeze_paramters(self, parameter_ids):
         for parameter_id in parameter_ids:
             self.parameters[parameter_id].__setattr__("fixed", False)
@@ -337,7 +343,7 @@ class Network:
             return mean_y
 
     # this is a function that allows the user to search for solutions spaces of model parameters to align with one dataset
-    def fit(self, data, time, arguments, initials=None, number=1, normalize=False, obj_calc=None, mlp=1):
+    def fit(self, data, time, arguments, initials=None, number=1, normalize=False, obj_calc=None, mlp=1, plots_path=None):
         '''
         Inputs:
         - Required: data, time frame to fit against, fitting algorithm arguments
@@ -361,6 +367,11 @@ class Network:
                 },
             ]
         '''
+        # save original stimuli configurations before running fitting on multiple conditions
+        original_stimuli_configs = {}
+        for substrate in self.substrates.values():
+            if substrate.__getattribute__("type") == "stimulus":
+                original_stimuli_configs[substrate.__getattribute__("id")] = [substrate.__getattribute__("max_value"), substrate.__getattribute__("time_ranges")]
         bounds, bound_types, names = self.get_bounds_information() # extract information needed for fitting
         substrate_names = list(self.substrates.keys()) # extract substrate order information for indexing purposes
         # randomly generate starting conditions to generate a more robust fit for long-term system behavior (don't need to apply this if want to fit to a given set of intital conditions)
@@ -385,8 +396,8 @@ class Network:
             for entry in data:
                 # apply conditions from current fitting data condition set
                 for i, stimulus in enumerate(entry["stimuli"]):
-                    stimulus.max_value = entry["max_values"][i]
-                    stimulus.time_ranges = entry["time_ranges"][i]
+                    self.substrates[stimulus].max_value = entry["max_values"][i]
+                    self.substrates[stimulus].time_ranges = entry["time_ranges"][i]
                 # generating model predictions with conditions and current paramters solution set
                 predictions = self.graph_distributions(time, number, initials=y0s, normalize=normalize, path=None, verbose=False)
                 # iterate through each substrate there is data from in that condition
@@ -402,6 +413,7 @@ class Network:
                         else:
                             cost += obj_calc(prediction, truth)
                             count += 1
+                self.reset_stimuli()
             return cost/count
         # apply loss function and appropriate parameters to the genetic algorithm implementation
         fitting_model = ga(function = loss,
@@ -415,4 +427,16 @@ class Network:
         fitting_model.run(set_function=ga.set_function_multiprocess(loss, n_jobs=mlp))
         # apply fitted conditions
         self.set_parameters(fitting_model.result.variable, names)
+        # plot fit if requested
+        if plots_path != None:
+            for i, entry in enumerate(data):
+                for i, stimulus in enumerate(entry["stimuli"]):
+                    self.substrates[stimulus].max_value = entry["max_values"][i]
+                    self.substrates[stimulus].time_ranges = entry["time_ranges"][i]
+                graph_distributions(time, number, normalize=normalize, substrates_to_plot=list(entry["substrates"].keys()), path=os.path.join(f"condition_{i}", plots_path))
+                self.reset_stimuli()
+        # restore original user specified configurations
+        for stimuli_id, configs in original_stimuli_configs.items():
+            self.substrates[stimuli_id].max_value = configs[0]
+            self.substrates[stimuli_id].time_ranges = configs[1]
         return names, fitting_model.result.variable

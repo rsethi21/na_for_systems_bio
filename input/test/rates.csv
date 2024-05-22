@@ -1,0 +1,9 @@
+identifier,value,fixed,bounds,bounds_type
+"k1",1,False,"0.01,1",real
+"k2",1,False,"0.01,1",real
+"r1",1,False,"0.01,1",real
+"r2",1,False,"0.01,1",real
+"r3",1,True,"0.01,1",real
+"r4",1,True,"0.01,1",real
+"s1",1,True,"0.01,1",real
+"s2",1,True,"0.01,1",real
