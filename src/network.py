@@ -2,7 +2,7 @@ from scipy.integrate import odeint
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 # PKH removing since don't have repo
-#from geneticalgorithm2 import geneticalgorithm2 as ga
+from geneticalgorithm2 import geneticalgorithm2 as ga
 import numpy as np
 from tqdm import tqdm
 import pdb
@@ -371,7 +371,7 @@ class Network:
         original_stimuli_configs = {}
         for substrate in self.substrates.values():
             if substrate.__getattribute__("type") == "stimulus":
-                original_stimuli_configs[substrate.__getattribute__("id")] = [substrate.__getattribute__("max_value"), substrate.__getattribute__("time_ranges")]
+                original_stimuli_configs[substrate.__getattribute__("identifier")] = [substrate.__getattribute__("max_value"), substrate.__getattribute__("time_ranges")]
         bounds, bound_types, names = self.get_bounds_information() # extract information needed for fitting
         substrate_names = list(self.substrates.keys()) # extract substrate order information for indexing purposes
         # randomly generate starting conditions to generate a more robust fit for long-term system behavior (don't need to apply this if want to fit to a given set of intital conditions)
@@ -433,7 +433,14 @@ class Network:
                 for i, stimulus in enumerate(entry["stimuli"]):
                     self.substrates[stimulus].max_value = entry["max_values"][i]
                     self.substrates[stimulus].time_ranges = entry["time_ranges"][i]
-                graph_distributions(time, number, normalize=normalize, substrates_to_plot=list(entry["substrates"].keys()), path=os.path.join(f"condition_{i}", plots_path))
+                fig, y = graph_distributions(time, number, normalize=normalize, output_figure=True, substrates_to_plot=list(entry["substrates"].keys()).extend(entry["stimuli"]))
+                plt.figure(fig)
+                for substrate_id, time_value_pairs in data["substrates"].items():
+                    index = list(self.subtrates.keys()).index(substrate_id)
+                    for time, value in time_value_pairs.items():
+                        plt.plot(time, value, color=self.colors[i])
+                fig.savefig(path=os.path.join(f"condition_{i}", plots_path))
+                plt.close(fig)
                 self.reset_stimuli()
         # restore original user specified configurations
         for stimuli_id, configs in original_stimuli_configs.items():

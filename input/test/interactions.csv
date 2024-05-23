@@ -1,5 +1,4 @@
 identifier,affected,effector,rate,effect,dissociation,hill_coefficient
-"int1","A","B","k1",,,
-"int2","B","C","k2",,,
+"int2","C","B","k2",,,
 "int3","A","S1","s1",1,,
 "int4","B","S2","s2",-1,,
