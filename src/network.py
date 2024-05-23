@@ -6,6 +6,7 @@ from geneticalgorithm2 import geneticalgorithm2 as ga
 import numpy as np
 from tqdm import tqdm
 import pdb
+import os
 import joblib
 
 class Network:
@@ -266,7 +267,6 @@ class Network:
             probe = odeint(self.get_dydt, self.get_initials(), normalize_time)[-1]
             for index, s in enumerate(self.substrates.values()):
                 s.__setattr__("time_ranges", stimuli_ranges[index])
-
             folds_y = odeint(self.get_dydt, probe, time)
             y = folds_y.copy()
             for t in range(y.shape[0]):
@@ -314,7 +314,7 @@ class Network:
         min_y = np.mean(ys, axis=0) - np.std(ys, axis=0)*2
         max_y = np.mean(ys, axis=0) + np.std(ys, axis=0)*2
         mean_y = np.mean(ys, axis=0)
-        if path != None or axis != None:
+        if output_figure or axis != None:
             if axis == None:
                 temp_fig = plt.figure()
                 for i, s in tqdm(enumerate(self.substrates.values()), desc="Plotting Each Substrates", total=len(self.substrates), disable=~verbose):
@@ -325,8 +325,9 @@ class Network:
                 plt.xlabel("Time (mins)")
                 plt.ylabel("Concentration (AU)")
                 plt.legend(loc="upper right", fontsize=5)
-                temp_fig.savefig(path)
-                plt.close(temp_fig)
+                if path != None:
+                    temp_fig.savefig(path)
+                    plt.close(temp_fig)
             else:
                 for i, s in tqdm(enumerate(self.substrates.values()), desc="Plotting Each Substrates", total=len(self.substrates), disable=~verbose):
                     if s.identifier in substrates_to_plot:
@@ -429,17 +430,19 @@ class Network:
         self.set_parameters(fitting_model.result.variable, names)
         # plot fit if requested
         if plots_path != None:
-            for i, entry in enumerate(data):
+            for j, entry in enumerate(data):
                 for i, stimulus in enumerate(entry["stimuli"]):
                     self.substrates[stimulus].max_value = entry["max_values"][i]
                     self.substrates[stimulus].time_ranges = entry["time_ranges"][i]
-                fig, y = graph_distributions(time, number, normalize=normalize, output_figure=True, substrates_to_plot=list(entry["substrates"].keys()).extend(entry["stimuli"]))
+                subs = list(entry["substrates"].keys())
+                subs.extend(entry["stimuli"])
+                y, fig = self.graph_distributions(time, number, normalize=normalize, output_figure=True, substrates_to_plot=subs)
                 plt.figure(fig)
-                for substrate_id, time_value_pairs in data["substrates"].items():
-                    index = list(self.subtrates.keys()).index(substrate_id)
-                    for time, value in time_value_pairs.items():
-                        plt.plot(time, value, color=self.colors[i])
-                fig.savefig(path=os.path.join(f"condition_{i}", plots_path))
+                for substrate_id, time_value_pairs in entry["substrates"].items():
+                    index = list(self.substrates.keys()).index(substrate_id)
+                    for t, value in time_value_pairs.items():
+                        plt.plot(int(t), value, marker=".", color=self.colors[i])
+                fig.savefig(os.path.join(plots_path, f"condition_{j}.png"))
                 plt.close(fig)
                 self.reset_stimuli()
         # restore original user specified configurations
