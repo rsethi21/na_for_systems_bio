@@ -1,0 +1,6 @@
+identifier,iv,type,k,r,mv,trs,other
+"A",1.0,"non-stimulus","k1","r1",,,"B"
+"B",0.0,"non-stimulus","r1","k1",,,"A"
+"C",0.0,"non-stimulus","k2","r2",,,
+"S1",0.0,"stimulus",,"r3",1.0,"25,100",
+"S2",0.0,"stimulus",,"r4",1.0,"50,125",
