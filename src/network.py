@@ -2,10 +2,11 @@ from scipy.integrate import odeint
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 # PKH removing since don't have repo
-#from geneticalgorithm2 import geneticalgorithm2 as ga
+from geneticalgorithm2 import geneticalgorithm2 as ga
 import numpy as np
 from tqdm import tqdm
 import pdb
+import os
 import joblib
 
 class Network:
@@ -17,11 +18,9 @@ class Network:
         self.initial_parameter_values = {parameter_id: parameter.__getattribute__("value") for parameter_id, parameter in self.parameters.items()}
         self.parsed_interactions = self.parse_interactions()
         self.rates = rates
-
-        np.random.seed(2824)
         self.colors = list(mcolors.CSS4_COLORS.keys())
-        np.random.shuffle(self.colors)
-    
+        self.colors = sorted(self.colors)
+
     def get_all_parameters(self):
         parameters = {}
         for interaction in list(self.interactions.values()):
@@ -44,10 +43,6 @@ class Network:
             if i in rate_names:
                 parameter.update_rate(X[rate_names.index(i)])
 
-    def set_currents(self, new_currents):
-        for substrate, new_current in zip(list(self.substrates.values()), new_currents):
-            substrate.__setattr__("current_value", new_current)
-
     def get_initials(self):
         y0 = []
         for substrate in list(self.substrates.values()):
@@ -62,12 +57,22 @@ class Network:
         for substrate, new_initial in zip(list(self.substrates.values()), new_initials):
             substrate.__setattr__("current_value", new_initial)
 
-    def reset(self):
+    def reset_intials(self):
         for sub_id, substrate in self.substrates.items():
             substrate.__setattr__("current_value", substrate.initial_value)
         for rate_id, rate in self.parameters.items():
             rate.update_rate(self.initial_parameter_values[rate_id])
     
+    def reset_stimuli(self):
+        for sub_id, substrate in self.substrates.items():
+            if substrate.__getattribute__("type") == "stimulus":
+                substrate.__setattr__("max_value", 0.0)
+                substrate.__setattr__("time_ranges", None)
+
+    def unfreeze_paramters(self, parameter_ids):
+        for parameter_id in parameter_ids:
+            self.parameters[parameter_id].__setattr__("fixed", False)
+
     def freeze_parameters(self, parameter_ids):
         for parameter_id in parameter_ids:
             self.parameters[parameter_id].__setattr__("fixed", True)
@@ -92,77 +97,102 @@ class Network:
                     parsed_interactions[substrate_id][rate_id].append((substrate2, interaction.__getattribute__("effect")))
         return parsed_interactions
 
+    # piece together derivatives for plotting purposes
     def get_dydt(self, y, time):
-        self.set_currents(y)
-        dydt = {substrate_id: 0 for substrate_id in list(self.substrates.keys())}
+        '''
+        Inputs: current state of substrates, current time
+        Outputs: predicted change in substrates
+        '''
+        self.set_currents(y) # set the current state of system substrates
+        dydt = {substrate_id: 0 for substrate_id in list(self.substrates.keys())} # instantiate dictionary to hold differential equations
+        # iterate through each substrate
         for substrate_id in list(dydt.keys()):
-            substrate_of_interest = self.substrates[substrate_id]
-            if substrate_of_interest.other != None:
-                other = self.substrates[substrate_of_interest.other]
-            else:
-                other = None
+            substrate_of_interest = self.substrates[substrate_id] # extract substrate object
+            # check if substrate is not a stimulus
             if substrate_of_interest.__getattribute__("type") == "non-stimulus":
-                k = substrate_of_interest.__getattribute__("k")
-                r = substrate_of_interest.__getattribute__("r")
+                k = substrate_of_interest.__getattribute__("k") # extract phophorylation/activation rate
+                r = substrate_of_interest.__getattribute__("r") # extract dephosphorylation/deactivation rate
                 if substrate_of_interest.other != None:
-                    upreg_term = 1*k.__getattribute__("value")*other.__getattribute__("current_value")
+                    upreg_term = 1*k.__getattribute__("value")*self.substrates[substrate_of_interest.other].__getattribute__("current_value") # by default apply opposite form of the substrate to positive
                 else:
-                    upreg_term = 1*k.__getattribute__("value")
-                downreg_term = -1*r.__getattribute__("value")*substrate_of_interest.__getattribute__("current_value")
-                terms = {k.__getattribute__("identifier"): upreg_term, r.__getattribute__("identifier"): downreg_term}
-                for parameter_id, associated_interactions in self.parsed_interactions[substrate_id].items():
+                    upreg_term = 1*k.__getattribute__("value") # otherwise just instantiate with activation rate
+                downreg_term = -1*r.__getattribute__("value")*substrate_of_interest.__getattribute__("current_value") #  by default substrate will be deacticated by itself
+                terms = {k.__getattribute__("identifier"): upreg_term, r.__getattribute__("identifier"): downreg_term} # store terms for ease of parsing interactions
+                for parameter_id, associated_interactions in self.parsed_interactions[substrate_id].items(): # iterate throat each interaction parameter related to a specific substrate
                     if parameter_id not in list(terms.keys()):
-                        temporary_term = self.parameters[parameter_id].__getattribute__("value")*associated_interactions[0][1] # check this
+                        temporary_term = self.parameters[parameter_id].__getattribute__("value")*associated_interactions[0][1] # add any additional terms that are not related to activation/deactivation rates
                     else:
-                        temporary_term = terms[parameter_id]
-                    for interaction in associated_interactions:
-                        if len(interaction) == 2:
-                            temporary_term *= self.substrates[interaction[0]].__getattribute__("current_value")
-                        else:
-                            if interaction[1] == -1:
+                        temporary_term = terms[parameter_id] # if already in terms then extract the parameter of interest
+                    for interaction in associated_interactions: # iterate throat each interaction pair
+                        if len(interaction) == 2: # check if first order iteraction between substrate
+                            temporary_term *= self.substrates[interaction[0]].__getattribute__("current_value") # apply substrate iteraction to current term
+                        else: #  else assume using hill equation
+                            if interaction[1] == -1: # if negative iteraction then negative feedback term
                                 substrate = self.substrates[interaction[0]].__getattribute__("current_value")
                                 Km = self.parameters[interaction[2]].__getattribute__("value")
                                 n = self.parameters[interaction[3]].__getattribute__("value")
                                 temporary_term = temporary_term * (Km**n/(substrate**n + Km**n))
-                            else:
+                            else: # else then positive feedback term
                                 substrate = self.substrates[interaction[0]].__getattribute__("current_value")
                                 Km = self.parameters[interaction[2]].__getattribute__("value")
                                 n = self.parameters[interaction[3]].__getattribute__("value")
                                 temporary_term = temporary_term * ((substrate**n + Km**n)/Km**n)
-                    terms[parameter_id] = temporary_term
+                    terms[parameter_id] = temporary_term # apply calculations of the term of interest to the appropriate location in terms dictionary
                 dydt[substrate_id] = sum(list(terms.values()))
+            # if substrate is a stimulus
             else:
-                max_val = substrate_of_interest.__getattribute__("max_value")
-                current_val = substrate_of_interest.__getattribute__("current_value")
-                time_ranges = substrate_of_interest.__getattribute__("time_ranges")
-                if time_ranges == None:
+                max_val = substrate_of_interest.__getattribute__("max_value") # extract max value
+                current_val = substrate_of_interest.__getattribute__("current_value") # extract current_value/initial value
+                time_ranges = substrate_of_interest.__getattribute__("time_ranges") # extract time range of interaction
+                if time_ranges == None: # check if any time ranges specified for application of stimulus
                     between = False
                     after = False
-                else:
-                    for time_range in reversed(time_ranges):
+                else: # manually check at each of the time ranges
+                    for i, time_range in enumerate(time_ranges): # iterate through each time range
+                        # check if current time is in between the current range probed
                         if time >= time_range[0] and time <= time_range[1]:
                             between = True
                             after = False
                             break
+                        # check if current time is after the current range probed
                         elif time > time_range[1] and time > time_range[0]:
-                            after = True
-                            between = False
-                            break
+                            # if this is the last range to probe, then the after rate can be applied
+                            if i == len(time_ranges) - 1:
+                                after = True
+                                between = False
+                                break
+                            # if this is not the last range to probe and not in next range to probe then after rate can be applied
+                            elif time_ranges[i+1][0] > time:
+                                after = True
+                                between = False
+                                break
+                            # if this is not the last range to probe and in the next range then allow for check in the next range
+                            elif time_ranges[i+1][0] <= time:
+                                continue
+                        # if not between or after, then before so no rate applied
                         else:
                             between = False
                             after = False
+                # check to see if the stimuli has a deprication rate assigned
                 if substrate_of_interest.__getattribute__("r") != None and time_ranges != None:
+                    # extract deprication rate
                     r = substrate_of_interest.__getattribute__("r").__getattribute__("value")
+                    # check to see if the substrate has reached the max value within certain error (1000ths by default)
                     if abs(current_val - max_val) <= 0.001:
-                        substrate_of_interest.reached = True
+                        substrate_of_interest.reached = True # marker for if reached
+                    # if between and not reached then allow to reach max value
                     if between and not substrate_of_interest.reached:
                         dydt[substrate_id] = max_val - current_val
+                    # if between and reached, then apply deprication rate
                     elif between and substrate_of_interest.reached:
                         dydt[substrate_id] = -1*r*current_val
+                    # if after then apply depcrication
                     elif after:
                         dydt[substrate_id] = -1*r*current_val
+                    # if before then no rate
                     else:
                         dydt[substrate_id] = 0
+                # apply same conditions but without deprication
                 else:
                     if between:
                         dydt[substrate_id] = max_val - current_val
@@ -170,7 +200,6 @@ class Network:
                         dydt[substrate_id] = -current_val
                     else:
                         dydt[substrate_id] = 0
-
         return list(dydt.values())
 
     def get_representation_dydt(self):
@@ -238,7 +267,6 @@ class Network:
             probe = odeint(self.get_dydt, self.get_initials(), normalize_time)[-1]
             for index, s in enumerate(self.substrates.values()):
                 s.__setattr__("time_ranges", stimuli_ranges[index])
-
             folds_y = odeint(self.get_dydt, probe, time)
             y = folds_y.copy()
             for t in range(y.shape[0]):
@@ -286,7 +314,7 @@ class Network:
         min_y = np.mean(ys, axis=0) - np.std(ys, axis=0)*2
         max_y = np.mean(ys, axis=0) + np.std(ys, axis=0)*2
         mean_y = np.mean(ys, axis=0)
-        if path != None or axis != None:
+        if output_figure or axis != None:
             if axis == None:
                 temp_fig = plt.figure()
                 for i, s in tqdm(enumerate(self.substrates.values()), desc="Plotting Each Substrates", total=len(self.substrates), disable=~verbose):
@@ -297,8 +325,9 @@ class Network:
                 plt.xlabel("Time (mins)")
                 plt.ylabel("Concentration (AU)")
                 plt.legend(loc="upper right", fontsize=5)
-                temp_fig.savefig(path)
-                plt.close(temp_fig)
+                if path != None:
+                    temp_fig.savefig(path)
+                    plt.close(temp_fig)
             else:
                 for i, s in tqdm(enumerate(self.substrates.values()), desc="Plotting Each Substrates", total=len(self.substrates), disable=~verbose):
                     if s.identifier in substrates_to_plot:
@@ -313,30 +342,81 @@ class Network:
             return mean_y, min_y, max_y
         else:
             return mean_y
-    def fit(self, data, time, arguments, number=1, normalize=False, obj_calc=None, mlp=1):
-        bounds, bound_types, names = self.get_bounds_information()
-        substrate_names = list(self.substrates.keys())
-        y0s = []
-        for _ in tqdm(range(number),desc="Generating Random Initial",total=number, disable=True):
-            y0 = []
-            for i, s in enumerate(self.substrates.values()):
-                if s.__getattribute__("type") == "stimulus":
-                    y0.append(0.0)
-                else:
-                    y0.append(2**np.random.randn())
-            y0s.append(y0)
-        def loss(X):
-            self.set_parameters(X, names)
-            cost = 0
-            predictions = self.graph_distributions(time, number, initials=y0s, normalize=normalize, path=None, verbose=False)
-            for substrate_id, substrate_data in data.items():
-                for time_point, truth in substrate_data.items():
-                    prediction = predictions[int(time_point), substrate_names.index(substrate_id)]
-                    if obj_calc == None:
-                        cost += (prediction - float(truth))**2
+
+    # this is a function that allows the user to search for solutions spaces of model parameters to align with one dataset
+    def fit(self, data, time, arguments, initials=None, number=1, normalize=False, obj_calc=None, mlp=1, plots_path=None):
+        '''
+        Inputs:
+        - Required: data, time frame to fit against, fitting algorithm arguments
+        - Optional: number of random conditions, set of initials if certain initial conditions to test, whether to apply fold normalization, objective function if different, mlp processing cores to use
+        Outputs:
+        - names of parameters, fitted parameters
+        Training Data Format: json
+        Example:
+            [
+                {
+                    stimuli: ["",],
+                    max_values:[_,],
+                    time_ranges: [ [[_,_]], ],
+                    substrates: 
+                    {
+                        "": 
+                            {
+                                time: _,
+                            },
+                    }
+                },
+            ]
+        '''
+        # save original stimuli configurations before running fitting on multiple conditions
+        original_stimuli_configs = {}
+        for substrate in self.substrates.values():
+            if substrate.__getattribute__("type") == "stimulus":
+                original_stimuli_configs[substrate.__getattribute__("identifier")] = [substrate.__getattribute__("max_value"), substrate.__getattribute__("time_ranges")]
+        bounds, bound_types, names = self.get_bounds_information() # extract information needed for fitting
+        substrate_names = list(self.substrates.keys()) # extract substrate order information for indexing purposes
+        # randomly generate starting conditions to generate a more robust fit for long-term system behavior (don't need to apply this if want to fit to a given set of intital conditions)
+        if initials == None:
+            y0s = [] # instantiate empty list
+            for _ in tqdm(range(number),desc="Generating Random Initial",total=number, disable=True): # iterate through the number of randomly generated intial conditions
+                y0 = []
+                for i, s in enumerate(self.substrates.values()): # iterate through all the substrates
+                    if s.__getattribute__("type") == "stimulus": # if the substrate is a stimulus category, use 0 for initial condition
+                        y0.append(0.0)
                     else:
-                        cost += obj_calc(prediction, truth)
-            return cost
+                        y0.append(2**np.random.randn()) # else randomly generate one
+                y0s.append(y0) # append sample conditions to a list of multiple random conditions
+        else:
+            y0s = initials
+        # calculate loss between model and data to fit against
+        def loss(X):
+            self.set_parameters(X, names) # setting parameters from current solution space
+            cost = 0 # instantiating cost
+            count = 0 # instantiating record for calculating average loss
+            # iterate through fitting data for each set of conditions data is collected
+            for entry in data:
+                # apply conditions from current fitting data condition set
+                for i, stimulus in enumerate(entry["stimuli"]):
+                    self.substrates[stimulus].max_value = entry["max_values"][i]
+                    self.substrates[stimulus].time_ranges = entry["time_ranges"][i]
+                # generating model predictions with conditions and current paramters solution set
+                predictions = self.graph_distributions(time, number, initials=y0s, normalize=normalize, path=None, verbose=False)
+                # iterate through each substrate there is data from in that condition
+                for substrate_id, substrate_data in entry["substrates"].items():
+                    # iterate throat each time point there is data for the substrate in that specific condition
+                    for time_point, truth in substrate_data.items():
+                        # extract the appropriate prediction
+                        prediction = predictions[int(time_point), substrate_names.index(substrate_id)]
+                        # calculate cost (either SE or any that one chooses)
+                        if obj_calc == None:
+                            cost += (prediction - float(truth))**2
+                            count += 1
+                        else:
+                            cost += obj_calc(prediction, truth)
+                            count += 1
+                self.reset_stimuli()
+            return cost/count
+        # apply loss function and appropriate parameters to the genetic algorithm implementation
         fitting_model = ga(function = loss,
                            dimension = len(bounds),
                            variable_type = bound_types,
@@ -344,6 +424,29 @@ class Network:
                            algorithm_parameters = arguments
                            )
         
+        # run fitting
         fitting_model.run(set_function=ga.set_function_multiprocess(loss, n_jobs=mlp))
+        # apply fitted conditions
         self.set_parameters(fitting_model.result.variable, names)
+        # plot fit if requested
+        if plots_path != None:
+            for j, entry in enumerate(data):
+                for i, stimulus in enumerate(entry["stimuli"]):
+                    self.substrates[stimulus].max_value = entry["max_values"][i]
+                    self.substrates[stimulus].time_ranges = entry["time_ranges"][i]
+                subs = list(entry["substrates"].keys())
+                subs.extend(entry["stimuli"])
+                y, fig = self.graph_distributions(time, number, normalize=normalize, output_figure=True, substrates_to_plot=subs)
+                plt.figure(fig)
+                for substrate_id, time_value_pairs in entry["substrates"].items():
+                    index = list(self.substrates.keys()).index(substrate_id)
+                    for t, value in time_value_pairs.items():
+                        plt.plot(int(t), value, marker=".", color=self.colors[i])
+                fig.savefig(os.path.join(plots_path, f"condition_{j}.png"))
+                plt.close(fig)
+                self.reset_stimuli()
+        # restore original user specified configurations
+        for stimuli_id, configs in original_stimuli_configs.items():
+            self.substrates[stimuli_id].max_value = configs[0]
+            self.substrates[stimuli_id].time_ranges = configs[1]
         return names, fitting_model.result.variable

@@ -57,7 +57,6 @@ if __name__ == "__main__":
     for i, combo in tqdm(enumerate(combos), total=len(amts)*len(ranges)):
         network.substrates["Ca2+"].max_value = combo[0]
         network.substrates["Ca2+"].time_ranges = [combo[1]]
-
     # check post-training training error
         mean_y_regular = network.graph_distributions(time, args.number, normalize=True, initials=initials)
         print(f"Originally s3 was: {network.parameters['s3'].value}")
