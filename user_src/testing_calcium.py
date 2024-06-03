@@ -60,7 +60,6 @@ if __name__ == "__main__":
 
     # check post-training training error
         mean_y_regular = network.graph_distributions(time, args.number, normalize=True, initials=initials)
-<<<<<<< HEAD
         print(f"Originally s3 was: {network.parameters['s3'].value}")
     #    mean_y_decrP2Y12 = network.graph_distributions(time, args.number, normalize=True, initials=initials)
     #    print(f"Adjusted s3 was: {network.parameters['s3'].value}")
@@ -68,16 +67,6 @@ if __name__ == "__main__":
         plt.plot(range(len(mean_y_regular[:,indices[0]])), mean_y_regular[:,indices])
         # plt.plot(range(len(mean_y_decrP2Y12[:,indices[0]])), mean_y_decrP2Y12[:,indices])
     plt.legend(["ctrl-PIP3", "ctrl-pAKT", "ctrl-pPTEN", "ctrl-LPS"])
-=======
-        print(f"Originally k13 was: {network.parameters['k13'].value}")
-        network.parameters["k13"].value = 0.0
-        mean_y_decrP2Y12 = network.graph_distributions(time, args.number, normalize=True, initials=initials)
-        print(f"Adjusted k13 was: {network.parameters['k13'].value}")
-        indices = [list(network.substrates.keys()).index("pAKT"), list(network.substrates.keys()).index("PIP3"), list(network.substrates.keys()).index("pFF")]
-        plt.plot(range(len(mean_y_regular[:,indices[0]])), mean_y_regular[:,indices])
-        plt.plot(range(len(mean_y_decrP2Y12[:,indices[0]])), mean_y_decrP2Y12[:,indices])
-    plt.legend(["ctrl-pAKT", "ctrl-PIP3", "ctrl-pFF", "exp-pAKT", "exp-PIP3", "exp-pFF"])
->>>>>>> 665bad073c7e958175e5f19b6a9ee302f6645c85
     combo_figure.savefig(os.path.join(args.output, "./combo_fig.png"))
         # temp_df = pd.DataFrame(mean_y, columns=list(network.substrates.keys()))
         # temp_df.to_csv(os.path.join(args.output, f"atp_{combo[0]}_{combo[1]}"))
