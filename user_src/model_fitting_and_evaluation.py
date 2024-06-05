@@ -27,6 +27,7 @@ parser.add_argument("-p", "--parameters", help="pretrained parameters json file"
 parser.add_argument("-m", "--multi", help="number of processers to use for fitting", type=int, required=False, default=1)
 parser.add_argument("-n", "--number", help="number of random samples for area plot", type=int, required=False, default=10)
 parser.add_argument("-l", "--less", help="scaling factors to apply to parameters", required=False, default=None)
+parser.add_argument("-e", "--scale", help="scaling factors to apply to parameters", required=False, default=None)
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -89,7 +90,10 @@ if __name__ == "__main__":
             fit_dictionary = json.load(file)
         with open(args.arguments, "r") as argument_file:
             argues = json.load(argument_file)
-        network.scale(fit_dictionary, time, argues, scaling_bounds=[1,3], number=args.number, normalize=True, mlp=args.multi)
+        if args.scale != None:
+            network.scale(fit_dictionary, time, argues, scaling_bounds=[1,3], number=args.number, normalize=True, mlp=args.multi)
+        else:
+            network.fit(fit_dictionary, time, argues, number=args.number, normalize=True, mlp=args.multi)
         with open(os.path.join(args.output, "fitted_params_scaled.json"), "w") as out_file:
             json.dump({i: r.value for i, r in network.parameters.items()}, out_file)
 

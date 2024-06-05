@@ -27,10 +27,30 @@ class Network:
             parameters.update(interaction.get_interaction_parameters())
         return parameters
     
+    def find_rate_pairs(self):
+        rate_pairs = {s.k.identifier+","+s.r.identifier: [s.k, s.r] for s in list(self.substrates.values()) if s.type == "non-stimulus"}
+        parameters_accounted = []
+        rate_pairs_filtered = {}
+        for pair in list(rate_pairs.keys()):
+            p1, p2 = pair.split(",")
+            if p2 in parameters_accounted or p1 in parameters_accounted:
+                pass
+            else:
+                parameters_accounted.extend([p1, p2])
+                rate_pairs_filtered[pair] = rate_pairs[pair]
+        return rate_pairs_filtered
+
     def apply_scaling(self, scales, names):
-        for i, parameter in self.parameters.items():
-            if i in names:
+        pairs = self.find_rate_pairs()
+        for i in names:
+            if i in list(self.parameters.keys()):
+                parameter = self.parameters[i]
                 parameter.update_rate(parameter.value * scales[names.index(i)])
+            else:
+                v1, v2 = pairs[i]
+                p1, p2 = i.split(",")
+                v1.update_rate(v1.value * scales[names.index(i)])
+                v2.update_rate(v2.value * scales[names.index(i)])
 
     def get_bounds_information(self):
         bounds = []
@@ -420,6 +440,12 @@ class Network:
             if substrate.__getattribute__("type") == "stimulus":
                 original_stimuli_configs[substrate.__getattribute__("identifier")] = [substrate.__getattribute__("max_value"), substrate.__getattribute__("time_ranges")]
         bounds, bound_types, names = self.get_bounds_information() # extract information needed for fitting
+        pair_names = list(self.find_rate_pairs().keys())
+        pairs_unraveled = []
+        for pair in pair_names:
+            pairs_unraveled.extend(pair.split(","))
+        names = [n for n in names if n not in pairs_unraveled]
+        names.extend(pair_names)
         bounds = [scaling_bounds for _ in range(len(bounds))]
         bound_types = ["int" for _ in range(len(bound_types))]
         substrate_names = list(self.substrates.keys()) # extract substrate order information for indexing purposes
