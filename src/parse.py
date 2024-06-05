@@ -23,6 +23,10 @@ def parse_rates(rates_csv_path):
             else:
                 convert_type = float
             parameters["bounds"] = [convert_type(b) for b in parameters["bounds"].split(",")]
+        if pd.isna(parameters["scale"]):
+            del parameters["scale"]
+        else:
+            paramters["value"] = paramters["value"]*paramters["scale"]
         rate_obj = Rate(**parameters)
         rates.append(rate_obj)
     return rates
