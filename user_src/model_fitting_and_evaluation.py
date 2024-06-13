@@ -60,10 +60,17 @@ if __name__ == "__main__":
     # check unfitted rates error
     # print("Randomly Generated Error")
     
+    # load in pretrained parameters if any
+    if args.parameters != None:
+        with open(args.parameters, "r") as fitted_params:
+            parameters = json.load(fitted_params)
+        network.set_parameters(list(parameters.values()), list(parameters.keys()))
+
+
     # random_parameters = np.random.rand(len([p for p in network.parameters.values() if p.fixed==False]))
     # network.set_parameters(random_parameters, [p.identifier for p in network.parameters.values() if p.fixed==False])
-    original = network.graph_distributions(time, args.number, normalize=True, substrates_to_plot=["pAKT", "pPTEN", "Phagocytosis", "LPS", "HDACi", "GSK3B", "LY294-002"], path=os.path.join(args.output, "figure_0_fit.png"), output_figure=False)
-    
+    original = network.graph_distributions(time, args.number, normalize=True, substrates_to_plot=["pAKT", "pPTEN", "Phagocytosis", "LPS", "HDACi", "GSK3B", "LY294-002"], path=os.path.join(args.output, "figure_0_manually_adjusted.png"), output_figure=False)
+    exit()
     # print(error(original, fit_dictionary, list(network.substrates.keys())))
     # print("BV2 --> Primary")
     # print(error(original, {"Phagocytosis": {420: 0.6}}, list(network.substrates.keys())))
@@ -74,10 +81,10 @@ if __name__ == "__main__":
     #print()
 
     # load in pretrained parameters if any
-    if args.parameters != None:
-        with open(args.parameters, "r") as fitted_params:
-            parameters = json.load(fitted_params)
-        network.set_parameters(list(parameters.values()), list(parameters.keys()))
+    # if args.parameters != None:
+    #     with open(args.parameters, "r") as fitted_params:
+    #         parameters = json.load(fitted_params)
+    #     network.set_parameters(list(parameters.values()), list(parameters.keys()))
 
     if args.less != None:
         with open(args.less) as less_params:
