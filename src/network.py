@@ -1,7 +1,6 @@
 from scipy.integrate import odeint
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
-# PKH removing since don't have repo
 from geneticalgorithm2 import geneticalgorithm2 as ga
 import numpy as np
 from tqdm import tqdm
@@ -123,12 +122,18 @@ class Network:
         return parsed_interactions
 
     # piece together derivatives for plotting purposes
-    def get_dydt(self, y, time):
+    def get_dydt(self, y, time, parameter_sets=None):
         '''
         Inputs: current state of substrates, current time
         Outputs: predicted change in substrates
         '''
         self.set_currents(y) # set the current state of system substrates
+        if parameter_sets != None:
+            for pi, config in parameter_sets.items():
+                if time >= config["times"][0] and time < config["times"][1]:
+                    self.parameters[pi].value = config["value"]
+                else:
+                    self.parameters[pi].value = self.initial_parameter_values[pi]
         dydt = {substrate_id: 0 for substrate_id in list(self.substrates.keys())} # instantiate dictionary to hold differential equations
         # iterate through each substrate
         for substrate_id in list(dydt.keys()):
@@ -282,7 +287,7 @@ class Network:
                     dydt[key] = 0
         return dydt
     
-    def graph(self, time, max_normalize=False, normalize=False, folds_normalize=False, steady_normalize=False, substrates_to_plot=[], path="./figure.png", output_figure=False):
+    def graph(self, time, max_normalize=False, normalize=False, folds_normalize=False, steady_normalize=False, substrates_to_plot=[], path="./figure.png", output_figure=False, parameter_sets=None):
         assert sum([max_normalize, normalize, steady_normalize, folds_normalize]) == 1 or sum([max_normalize, normalize, steady_normalize, folds_normalize]) == 0, "Can only use one normalization strategy at a time (steady state, max for each substrate, steady state folds, folds, or none)"
         if steady_normalize:
             normalize_time = np.linspace(0, time[-1], time[-1]+1)
@@ -310,7 +315,7 @@ class Network:
             for index, s in enumerate(self.substrates.values()):
                 s.__setattr__("time_ranges", stimuli_ranges[index])
                 s.__setattr__("max_value", stimuli_amts[index])
-            folds_y = odeint(self.get_dydt, probe, time)
+            folds_y = odeint(self.get_dydt, probe, time, args=(parameter_sets,))
             y = folds_y.copy()
             for t in range(y.shape[0]):
                 for index, s in enumerate(self.substrates.values()):
@@ -320,7 +325,7 @@ class Network:
                         y[t, index] = folds_y[t,index]
         elif folds_normalize:
             probe = self.get_initials()
-            folds_y = odeint(self.get_dydt, probe, time)
+            folds_y = odeint(self.get_dydt, probe, time, args=(parameter_sets,))
             y = folds_y.copy()
             for t in range(y.shape[0]):
                 for index, s in enumerate(self.substrates.values()):
@@ -329,7 +334,7 @@ class Network:
                     else:
                         y[t, index] = folds_y[t,index]
         elif max_normalize:
-            folds_y = odeint(self.get_dydt, probe, time)
+            folds_y = odeint(self.get_dydt, probe, time, args=(parameter_sets,))
             probe = np.max(folds_y, axis=0)
             y = folds_y.copy()
             for t in range(y.shape[0]):
@@ -339,7 +344,7 @@ class Network:
                     else:
                         y[t, index] = folds_y[t,index]
         else:
-            y = odeint(self.get_dydt, self.get_initials(), time)
+            y = odeint(self.get_dydt, self.get_initials(), time, args=(parameter_sets,))
         for s in self.substrates.values():
             s.__setattr__("reached", False)
         fig = plt.figure()
@@ -359,7 +364,7 @@ class Network:
             plt.close(fig)
             return y
 
-    def graph_distributions(self, time, samples, normalize=False, substrates_to_plot=[], path="./figure_with_area.png", output_figure=False, initials=None, verbose=True, axis=None, return_min_max=False):
+    def graph_distributions(self, time, samples, normalize=False, substrates_to_plot=[], path="./figure_with_area.png", output_figure=False, initials=None, verbose=True, axis=None, return_min_max=False, parameter_sets=None):
         if initials == None:
             y0s = []
             for _ in tqdm(range(samples),desc="Generating Random Initial",total=samples, disable=~verbose):
@@ -375,7 +380,7 @@ class Network:
         ys = []
         for y0 in tqdm(y0s, desc="Generating Simulations", disable=~verbose):
             self.set_initials(y0)
-            ys.append(self.graph(time, normalize=normalize, path=None))
+            ys.append(self.graph(time, normalize=normalize, path=None, parameter_sets=parameter_sets))
         min_y = np.mean(ys, axis=0) - np.std(ys, axis=0)*2
         max_y = np.mean(ys, axis=0) + np.std(ys, axis=0)*2
         mean_y = np.mean(ys, axis=0)

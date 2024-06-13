@@ -65,12 +65,15 @@ if __name__ == "__main__":
         with open(args.parameters, "r") as fitted_params:
             parameters = json.load(fitted_params)
         network.set_parameters(list(parameters.values()), list(parameters.keys()))
+        network.initial_parameter_values = parameters
 
+    dictionary = None
+    network.substrates["LY294-002"].time_ranges=[[240, 360]]
+    network.substrates["LY294-002"].max_value = 1.0
 
     # random_parameters = np.random.rand(len([p for p in network.parameters.values() if p.fixed==False]))
     # network.set_parameters(random_parameters, [p.identifier for p in network.parameters.values() if p.fixed==False])
-    original = network.graph_distributions(time, args.number, normalize=True, substrates_to_plot=["pAKT", "pPTEN", "Phagocytosis", "LPS", "HDACi", "GSK3B", "LY294-002"], path=os.path.join(args.output, "figure_0_manually_adjusted.png"), output_figure=False)
-    exit()
+    original = network.graph_distributions(time, args.number, normalize=True, substrates_to_plot=["pAKT", "LPS", "Phagocytosis", "PI3K"], path=os.path.join(args.output, "figure_0_manually_adjusted.png"), output_figure=False, parameter_sets=dictionary)
     # print(error(original, fit_dictionary, list(network.substrates.keys())))
     # print("BV2 --> Primary")
     # print(error(original, {"Phagocytosis": {420: 0.6}}, list(network.substrates.keys())))
@@ -79,7 +82,7 @@ if __name__ == "__main__":
     # original_fig.savefig(os.path.join(args.output, "figure_0.png"))
     # plt.close(original_fig)
     #print()
-
+    exit()
     # load in pretrained parameters if any
     # if args.parameters != None:
     #     with open(args.parameters, "r") as fitted_params:
