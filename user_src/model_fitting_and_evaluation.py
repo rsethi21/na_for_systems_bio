@@ -68,12 +68,16 @@ if __name__ == "__main__":
         network.initial_parameter_values = parameters
 
     dictionary = None
-    network.substrates["LY294-002"].time_ranges=[[240, 360]]
-    network.substrates["LY294-002"].max_value = 1.0
+    # dictionary = {
+    #     "k4": 
+    # }
+    # network.substrates["LY294-002"].time_ranges=[[240, 360]]
+    # network.substrates["LY294-002"].max_value = 1.0
 
     # random_parameters = np.random.rand(len([p for p in network.parameters.values() if p.fixed==False]))
     # network.set_parameters(random_parameters, [p.identifier for p in network.parameters.values() if p.fixed==False])
-    original = network.graph_distributions(time, args.number, normalize=True, substrates_to_plot=["pAKT", "LPS", "Phagocytosis", "PI3K"], path=os.path.join(args.output, "figure_0_manually_adjusted.png"), output_figure=False, parameter_sets=dictionary)
+    original, test_figure = network.graph_distributions(time, args.number, normalize=True, substrates_to_plot=["pAKT", "LPS", "Phagocytosis", "PI3K"], path=os.path.join(args.output, "figure_0_manually_adjusted.png"), output_figure=True, parameter_sets=dictionary)
+    plt.figure(test_figure)
     # print(error(original, fit_dictionary, list(network.substrates.keys())))
     # print("BV2 --> Primary")
     # print(error(original, {"Phagocytosis": {420: 0.6}}, list(network.substrates.keys())))
