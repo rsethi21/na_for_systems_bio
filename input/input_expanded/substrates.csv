@@ -10,7 +10,7 @@ identifier,iv,type,k,r,mv,trs,other
 "GSK3B",1.0,"non-stimulus","k5","r5",,,"pGSK3B"
 "pGSK3B",1.0,"non-stimulus","r5","k5",,,"GSK3B"
 "TNFa",0.0,"non-stimulus","k6","r6",,,
-"LPS",0.0,"stimulus",,,1.0,"30,210;240,300",
+"LPS",0.0,"stimulus",,,1.0,"60,240",
 "HDACi",0.0,"stimulus",,,0.0,,
 "Phagocytosis",0.0,"non-stimulus","k7","r7",,,
 "LY294-002",0.0,"stimulus",,,0.0,,
@@ -20,5 +20,4 @@ identifier,iv,type,k,r,mv,trs,other
 "Gio",1.0,"non-stimulus","k9","r9",,,
 "Ca2+",0.0,"stimulus",,"r12",0.0,,
 "ADP",0.0,"non-stimulus","r10","r11",,,"ATP"
-"FF",1.0,"non-stimulus","r13","k12",,,"pFF"
-"pFF",0.0,"non-stimulus","k12","r13",,,"FF"
+"shRNA_GSK3B",0.0,"stimulus",,,0.0,,

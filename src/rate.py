@@ -30,12 +30,13 @@ class Rate:
             adjust the value of the rate; required for finding optimal network parameters; will store abs value since rates could be negative or positive depending on the interaction used in
     """
     
-    def __init__(self, identifier: str, value: float, fixed: bool = False, bounds=[1, 10], bounds_type=int):
+    def __init__(self, identifier: str, value: float, fixed: bool = False, bounds=[1, 10], bounds_type=int, scale=1):
         self.identifier = identifier
         self.value = value
         self.fixed = fixed
         self.bounds = bounds
         self.bounds_type = bounds_type
+        self.scale_factor = scale
     
     def update_rate(self, new_rate):
         """

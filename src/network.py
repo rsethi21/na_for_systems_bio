@@ -1,7 +1,6 @@
 from scipy.integrate import odeint
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
-# PKH removing since don't have repo
 from geneticalgorithm2 import geneticalgorithm2 as ga
 import numpy as np
 from tqdm import tqdm
@@ -27,6 +26,31 @@ class Network:
             parameters.update(interaction.get_interaction_parameters())
         return parameters
     
+    def find_rate_pairs(self):
+        rate_pairs = {s.k.identifier+","+s.r.identifier: [s.k, s.r] for s in list(self.substrates.values()) if s.type == "non-stimulus"}
+        parameters_accounted = []
+        rate_pairs_filtered = {}
+        for pair in list(rate_pairs.keys()):
+            p1, p2 = pair.split(",")
+            if p2 in parameters_accounted or p1 in parameters_accounted:
+                pass
+            else:
+                parameters_accounted.extend([p1, p2])
+                rate_pairs_filtered[pair] = rate_pairs[pair]
+        return rate_pairs_filtered
+
+    def apply_scaling(self, scales, names):
+        pairs = self.find_rate_pairs()
+        for i in names:
+            if i in list(self.parameters.keys()):
+                parameter = self.parameters[i]
+                parameter.update_rate(parameter.value * scales[names.index(i)])
+            else:
+                v1, v2 = pairs[i]
+                p1, p2 = i.split(",")
+                v1.update_rate(v1.value * scales[names.index(i)])
+                v2.update_rate(v2.value * scales[names.index(i)])
+
     def get_bounds_information(self):
         bounds = []
         bounds_types = []
@@ -98,12 +122,18 @@ class Network:
         return parsed_interactions
 
     # piece together derivatives for plotting purposes
-    def get_dydt(self, y, time):
+    def get_dydt(self, y, time, parameter_sets=None):
         '''
         Inputs: current state of substrates, current time
         Outputs: predicted change in substrates
         '''
         self.set_currents(y) # set the current state of system substrates
+        if parameter_sets != None:
+            for pi, config in parameter_sets.items():
+                if time >= config["times"][0] and time < config["times"][1]:
+                    self.parameters[pi].value = config["value"]
+                else:
+                    self.parameters[pi].value = self.initial_parameter_values[pi]
         dydt = {substrate_id: 0 for substrate_id in list(self.substrates.keys())} # instantiate dictionary to hold differential equations
         # iterate through each substrate
         for substrate_id in list(dydt.keys()):
@@ -257,17 +287,55 @@ class Network:
                     dydt[key] = 0
         return dydt
     
-    def graph(self, time, normalize=False, substrates_to_plot=[], path="./figure.png", output_figure=False):
-        if normalize:
-            normalize_time = np.linspace(0, 1000, 1001)
+    def graph(self, time, max_normalize=False, normalize=False, folds_normalize=False, steady_normalize=False, substrates_to_plot=[], path="./figure.png", output_figure=False, parameter_sets=None):
+        assert sum([max_normalize, normalize, steady_normalize, folds_normalize]) == 1 or sum([max_normalize, normalize, steady_normalize, folds_normalize]) == 0, "Can only use one normalization strategy at a time (steady state, max for each substrate, steady state folds, folds, or none)"
+        if steady_normalize:
+            normalize_time = np.linspace(0, time[-1], time[-1]+1)
             stimuli_ranges = []
+            stimuli_amts = []
             for s in self.substrates.values():
                 stimuli_ranges.append(s.time_ranges)
+                stimuli_amts.append(s.max_value)
                 s.__setattr__("time_ranges", None)
+                s.__setattr__("max_value", 0)
             probe = odeint(self.get_dydt, self.get_initials(), normalize_time)[-1]
             for index, s in enumerate(self.substrates.values()):
                 s.__setattr__("time_ranges", stimuli_ranges[index])
-            folds_y = odeint(self.get_dydt, probe, time)
+                s.__setattr__("max_value", stimuli_amts[index])
+        elif normalize:
+            normalize_time = np.linspace(0, time[-1], time[-1]+1)
+            stimuli_ranges = []
+            stimuli_amts = []
+            for s in self.substrates.values():
+                stimuli_ranges.append(s.time_ranges)
+                stimuli_amts.append(s.max_value)
+                s.__setattr__("time_ranges", None)
+                s.__setattr__("max_value", 0)
+            probe = odeint(self.get_dydt, self.get_initials(), normalize_time)[-1]
+            for index, s in enumerate(self.substrates.values()):
+                s.__setattr__("time_ranges", stimuli_ranges[index])
+                s.__setattr__("max_value", stimuli_amts[index])
+            folds_y = odeint(self.get_dydt, probe, time, args=(parameter_sets,))
+            y = folds_y.copy()
+            for t in range(y.shape[0]):
+                for index, s in enumerate(self.substrates.values()):
+                    if s.__getattribute__("type") == "non-stimulus" and probe[index] > 0:
+                        y[t,index] = folds_y[t,index]/probe[index]
+                    else:
+                        y[t, index] = folds_y[t,index]
+        elif folds_normalize:
+            probe = self.get_initials()
+            folds_y = odeint(self.get_dydt, probe, time, args=(parameter_sets,))
+            y = folds_y.copy()
+            for t in range(y.shape[0]):
+                for index, s in enumerate(self.substrates.values()):
+                    if s.__getattribute__("type") == "non-stimulus" and probe[index] > 0:
+                        y[t,index] = folds_y[t,index]/probe[index]
+                    else:
+                        y[t, index] = folds_y[t,index]
+        elif max_normalize:
+            folds_y = odeint(self.get_dydt, probe, time, args=(parameter_sets,))
+            probe = np.max(folds_y, axis=0)
             y = folds_y.copy()
             for t in range(y.shape[0]):
                 for index, s in enumerate(self.substrates.values()):
@@ -276,11 +344,13 @@ class Network:
                     else:
                         y[t, index] = folds_y[t,index]
         else:
-            y = odeint(self.get_dydt, self.get_initials(), time)
+            y = odeint(self.get_dydt, self.get_initials(), time, args=(parameter_sets,))
         for s in self.substrates.values():
             s.__setattr__("reached", False)
         fig = plt.figure()
         if path != None:
+            if len(substrates_to_plot) == 0:
+                substrates_to_plot = list(self.substrates.keys())
             for i, substrate in tqdm(enumerate(list(self.substrates.values())), desc="Plotting Each Substrate", total=len(self.substrates)):
                 if substrate.identifier in substrates_to_plot:
                     plt.plot(time, y[:,i], self.colors[i], label=substrate.__getattribute__("identifier"))
@@ -294,7 +364,7 @@ class Network:
             plt.close(fig)
             return y
 
-    def graph_distributions(self, time, samples, normalize=False, substrates_to_plot=[], path="./figure_with_area.png", output_figure=False, initials=None, verbose=True, axis=None, return_min_max=False):
+    def graph_distributions(self, time, samples, normalize=False, substrates_to_plot=[], path="./figure_with_area.png", output_figure=False, initials=None, verbose=True, axis=None, return_min_max=False, parameter_sets=None):
         if initials == None:
             y0s = []
             for _ in tqdm(range(samples),desc="Generating Random Initial",total=samples, disable=~verbose):
@@ -310,11 +380,13 @@ class Network:
         ys = []
         for y0 in tqdm(y0s, desc="Generating Simulations", disable=~verbose):
             self.set_initials(y0)
-            ys.append(self.graph(time, normalize=normalize, path=None))
+            ys.append(self.graph(time, normalize=normalize, path=None, parameter_sets=parameter_sets))
         min_y = np.mean(ys, axis=0) - np.std(ys, axis=0)*2
         max_y = np.mean(ys, axis=0) + np.std(ys, axis=0)*2
         mean_y = np.mean(ys, axis=0)
-        if output_figure or axis != None:
+        if path != None or axis != None or output_figure:
+            if len(substrates_to_plot) == 0:
+                substrates_to_plot = list(self.substrates.keys())
             if axis == None:
                 temp_fig = plt.figure()
                 for i, s in tqdm(enumerate(self.substrates.values()), desc="Plotting Each Substrates", total=len(self.substrates), disable=~verbose):
@@ -342,6 +414,121 @@ class Network:
             return mean_y, min_y, max_y
         else:
             return mean_y
+
+    def scale(self, data, time, arguments, scaling_bounds=[1,5], initials=None, number=1, normalize=False, obj_calc=None, mlp=1, plots_path=None):
+        '''
+        Inputs:
+        - Required: data, time frame to fit against, fitting algorithm arguments
+        - Optional: number of random conditions, set of initials if certain initial conditions to test, whether to apply fold normalization, objective function if different, mlp processing cores to use
+        Outputs:
+        - names of parameters, fitted parameters
+        Training Data Format: json
+        Example:
+            [
+                {
+                    stimuli: ["",],
+                    max_values:[_,],
+                    time_ranges: [ [[_,_]], ],
+                    substrates: 
+                    {
+                        "": 
+                            {
+                                time: _,
+                            },
+                    }
+                },
+            ]
+        '''
+        # save original stimuli configurations before running fitting on multiple conditions
+        original_stimuli_configs = {}
+        for substrate in self.substrates.values():
+            if substrate.__getattribute__("type") == "stimulus":
+                original_stimuli_configs[substrate.__getattribute__("identifier")] = [substrate.__getattribute__("max_value"), substrate.__getattribute__("time_ranges")]
+        bounds, bound_types, names = self.get_bounds_information() # extract information needed for fitting
+        pair_names = list(self.find_rate_pairs().keys())
+        pairs_unraveled = []
+        for pair in pair_names:
+            pairs_unraveled.extend(pair.split(","))
+        names = [n for n in names if n not in pairs_unraveled]
+        names.extend(pair_names)
+        bounds = [scaling_bounds for _ in range(len(bounds))]
+        bound_types = ["int" for _ in range(len(bound_types))]
+        substrate_names = list(self.substrates.keys()) # extract substrate order information for indexing purposes
+        # randomly generate starting conditions to generate a more robust fit for long-term system behavior (don't need to apply this if want to fit to a given set of intital conditions)
+        if initials == None:
+            y0s = [] # instantiate empty list
+            for _ in tqdm(range(number),desc="Generating Random Initial",total=number, disable=True): # iterate through the number of randomly generated intial conditions
+                y0 = []
+                for i, s in enumerate(self.substrates.values()): # iterate through all the substrates
+                    if s.__getattribute__("type") == "stimulus": # if the substrate is a stimulus category, use 0 for initial condition
+                        y0.append(0.0)
+                    else:
+                        y0.append(2**np.random.randn()) # else randomly generate one
+                y0s.append(y0) # append sample conditions to a list of multiple random conditions
+        else:
+            y0s = initials
+        # calculate loss between model and data to fit against
+        def loss(X):
+            self.apply_scaling([10**(-1*x) for x in X], names) # setting parameters from current solution space
+            cost = 0 # instantiating cost
+            count = 0 # instantiating record for calculating average loss
+            # iterate through fitting data for each set of conditions data is collected
+            for entry in data:
+                # apply conditions from current fitting data condition set
+                for i, stimulus in enumerate(entry["stimuli"]):
+                    self.substrates[stimulus].max_value = entry["max_values"][i]
+                    self.substrates[stimulus].time_ranges = entry["time_ranges"][i]
+                # generating model predictions with conditions and current paramters solution set
+                predictions = self.graph_distributions(time, number, initials=y0s, normalize=normalize, path=None, verbose=False)
+                # iterate through each substrate there is data from in that condition
+                for substrate_id, substrate_data in entry["substrates"].items():
+                    # iterate throat each time point there is data for the substrate in that specific condition
+                    for time_point, truth in substrate_data.items():
+                        # extract the appropriate prediction
+                        prediction = predictions[int(time_point), substrate_names.index(substrate_id)]
+                        # calculate cost (either SE or any that one chooses)
+                        if obj_calc == None:
+                            cost += (prediction - float(truth))**2
+                            count += 1
+                        else:
+                            cost += obj_calc(prediction, truth)
+                            count += 1
+                self.reset_stimuli()
+            return cost/count
+        # apply loss function and appropriate parameters to the genetic algorithm implementation
+        fitting_model = ga(function = loss,
+                           dimension = len(bounds),
+                           variable_type = bound_types,
+                           variable_boundaries = bounds,
+                           algorithm_parameters = arguments
+                           )
+        
+        # run fitting
+        fitting_model.run(set_function=ga.set_function_multiprocess(loss, n_jobs=mlp))
+        # apply fitted conditions
+        self.apply_scaling([10**(-1*s) for s in fitting_model.result.variable], names)
+        # plot fit if requested
+        if plots_path != None:
+            for j, entry in enumerate(data):
+                for i, stimulus in enumerate(entry["stimuli"]):
+                    self.substrates[stimulus].max_value = entry["max_values"][i]
+                    self.substrates[stimulus].time_ranges = entry["time_ranges"][i]
+                subs = list(entry["substrates"].keys())
+                subs.extend(entry["stimuli"])
+                y, fig = self.graph_distributions(time, number, normalize=normalize, output_figure=True, substrates_to_plot=subs)
+                plt.figure(fig)
+                for substrate_id, time_value_pairs in entry["substrates"].items():
+                    index = list(self.substrates.keys()).index(substrate_id)
+                    for t, value in time_value_pairs.items():
+                        plt.plot(int(t), value, marker=".", color=self.colors[i])
+                fig.savefig(os.path.join(plots_path, f"condition_{j}.png"))
+                plt.close(fig)
+                self.reset_stimuli()
+        # restore original user specified configurations
+        for stimuli_id, configs in original_stimuli_configs.items():
+            self.substrates[stimuli_id].max_value = configs[0]
+            self.substrates[stimuli_id].time_ranges = configs[1]
+        return names, fitting_model.result.variable
 
     # this is a function that allows the user to search for solutions spaces of model parameters to align with one dataset
     def fit(self, data, time, arguments, initials=None, number=1, normalize=False, obj_calc=None, mlp=1, plots_path=None):
