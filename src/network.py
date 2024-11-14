@@ -334,6 +334,7 @@ class Network:
                     else:
                         y[t, index] = folds_y[t,index]
         elif max_normalize:
+            probe = self.get_initials()
             folds_y = odeint(self.get_dydt, probe, time, args=(parameter_sets,))
             probe = np.max(folds_y, axis=0)
             y = folds_y.copy()
