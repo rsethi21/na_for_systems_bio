@@ -364,7 +364,7 @@ class Network:
             plt.close(fig)
             return y
 
-    def graph_distributions(self, time, samples, normalize=False, substrates_to_plot=[], path="./figure_with_area.png", output_figure=False, initials=None, verbose=True, axis=None, return_min_max=False, parameter_sets=None):
+    def graph_distributions(self, time, samples, max_normalize=False, normalize=False, substrates_to_plot=[], path="./figure_with_area.png", output_figure=False, initials=None, verbose=True, axis=None, return_min_max=False, parameter_sets=None):
         if initials == None:
             y0s = []
             for _ in tqdm(range(samples),desc="Generating Random Initial",total=samples, disable=~verbose):
@@ -380,7 +380,7 @@ class Network:
         ys = []
         for y0 in tqdm(y0s, desc="Generating Simulations", disable=~verbose):
             self.set_initials(y0)
-            ys.append(self.graph(time, normalize=normalize, path=None, parameter_sets=parameter_sets))
+            ys.append(self.graph(time, max_normalize=max_normalize, normalize=normalize, path=None, parameter_sets=parameter_sets))
         min_y = np.mean(ys, axis=0) - np.std(ys, axis=0)*2
         max_y = np.mean(ys, axis=0) + np.std(ys, axis=0)*2
         mean_y = np.mean(ys, axis=0)
